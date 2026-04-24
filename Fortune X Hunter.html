@@ -1,0 +1,2041 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<title>Fortune X Hunter — Slot Demo</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0a0605;
+    --bg-1:#15100c;
+    --bg-2:#1d1610;
+    --leather:#2a1a10;
+    --leather-hi:#3d2617;
+    --brass:#c8962a;
+    --brass-hi:#f2c04b;
+    --brass-lo:#7a5815;
+    --gold:#ffd66b;
+    --cream:#f4e2b8;
+    --ink:#0c0705;
+    --blood:#b1321a;
+    --blood-hi:#e84f2c;
+    --ok:#6cd47a;
+    --panel:#120c08;
+    --panel-edge:#4a2e18;
+    --reel-bg:#0e0906;
+    --win:#ffcf4d;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;background:#000;color:var(--cream);font-family:Oswald,system-ui,sans-serif;-webkit-font-smoothing:antialiased;user-select:none;overflow-x:hidden}
+  body{
+    background:
+      radial-gradient(ellipse at 50% 10%, #3a1e0c 0%, #120a06 55%, #05030200 100%),
+      radial-gradient(ellipse at 50% 100%, #2a140a 0%, #06030200 60%),
+      #050302;
+    overflow:hidden;
+  }
+
+  /* -------- stage scaling -------- */
+  #stage-wrap{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
+  @media (orientation: portrait) and (max-width: 900px){
+    #pstage-wrap{display:none !important}
+    #tweaks{width:calc(100vw - 28px) !important;right:14px !important;bottom:14px !important}
+  }
+  #stage{
+    width:1280px;height:800px;position:relative;
+    transform-origin:center center;
+    background:
+      radial-gradient(ellipse at 50% 0%, #4a230e 0%, #1a0d06 50%, #0a0604 100%),
+      linear-gradient(180deg,#1a0d06 0%, #0b0604 100%);
+    box-shadow:0 0 0 2px #2a1608, 0 40px 120px #000 inset, 0 0 0 20px #0a0503;
+    border-radius:10px;
+    overflow:hidden;
+  }
+  /* rope / leather border */
+  #stage::before{
+    content:"";position:absolute;inset:12px;border:2px solid #6a411c;border-radius:6px;
+    box-shadow:0 0 0 6px #2a1608 inset, 0 0 40px #00000080 inset;
+    pointer-events:none;z-index:2;
+  }
+  /* subtle noise */
+  #stage::after{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:3;opacity:.08;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' seed='7'/><feColorMatrix values='0 0 0 0 0.7 0 0 0 0 0.5 0 0 0 0 0.2 0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode:overlay;
+  }
+
+  /* -------- top logo & multiplier strip -------- */
+  .top-bar{
+    position:absolute;left:40px;right:40px;top:28px;height:82px;z-index:5;
+    display:grid;grid-template-columns:230px 1fr 230px;gap:16px;align-items:center;
+  }
+  .logo{
+    display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+    padding:6px 10px;
+  }
+  .logo .en{
+    font-family:Cinzel,serif;font-weight:800;letter-spacing:.06em;
+    font-size:22px;line-height:1;color:var(--gold);
+    text-shadow:0 1px 0 #4a2e10, 0 0 12px #ffb24033;
+  }
+  .logo .zh{
+    font-family:"Noto Serif TC","Songti TC",serif;font-weight:900;
+    font-size:28px;line-height:1;margin-top:4px;
+    background:linear-gradient(180deg,#ffe28a 0%,#c8892a 55%, #7a4f10 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 2px 0 #00000080;
+  }
+  .logo .x{color:#e84f2c;-webkit-text-fill-color:#e84f2c;text-shadow:0 0 14px #e84f2c88}
+
+  .mstrip{
+    height:78px;border-radius:8px;position:relative;
+    background:linear-gradient(180deg,#1a0f08 0%, #0d0805 100%);
+    border:1px solid #5a371a;
+    box-shadow:0 0 0 2px #2a1608, 0 10px 28px #00000080, 0 0 30px #ffb13a22 inset;
+    overflow:hidden;
+  }
+  .mstrip .track{
+    position:absolute;inset:8px;display:flex;align-items:center;justify-content:space-between;gap:6px;
+  }
+  .mcell{
+    flex:1;height:100%;display:grid;place-items:center;position:relative;
+    font-family:Cinzel,serif;font-weight:800;font-size:22px;color:#a87d3c;
+    letter-spacing:.04em;
+    border-left:1px dashed #3a220e;
+  }
+  .mcell:first-child{border-left:0}
+  .mcell.active{
+    color:#0a0604;
+    background:
+      radial-gradient(ellipse at 50% 50%, #ffe28a 0%, #e8b345 50%, #a06a18 100%);
+    box-shadow:0 0 24px #ffb24088, 0 0 0 1px #fff6 inset;
+    text-shadow:0 1px 0 #ffe9a8;
+  }
+  .mcell.active::after{
+    content:"";position:absolute;inset:-2px;border:2px solid #ffefa8;border-radius:4px;
+    box-shadow:0 0 18px #ffd66b;
+    animation:pulse 1.2s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes pulse{0%,100%{opacity:.7}50%{opacity:1}}
+
+  .extra-pill{
+    height:58px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:10px;
+    padding:0 14px;cursor:pointer;
+    background:linear-gradient(180deg,#2a150a 0%,#140a05 100%);
+    border:1px solid #5a371a;
+    box-shadow:0 6px 0 #1a0c06, 0 0 0 2px #2a1608;
+    transition:transform .1s ease;
+    position:relative;
+  }
+  .extra-pill:active{transform:translateY(2px);box-shadow:0 2px 0 #1a0c06, 0 0 0 2px #2a1608}
+  .extra-pill.on{
+    background:linear-gradient(180deg,#b1321a 0%,#6a1708 100%);
+    border-color:#ffb96b;
+    box-shadow:0 6px 0 #1a0c06, 0 0 0 2px #3a1208, 0 0 28px #e84f2c88;
+  }
+  .extra-pill .label{font-weight:700;letter-spacing:.06em;color:var(--cream);font-size:13px;text-transform:uppercase}
+  .extra-pill .sub{font-family:JetBrains Mono,monospace;font-size:12px;color:#ffd08a}
+  .extra-pill .dot{width:10px;height:10px;border-radius:50%;background:#553;box-shadow:0 0 0 2px #110}
+  .extra-pill.on .dot{background:#ffe26a;box-shadow:0 0 0 2px #3a1208, 0 0 10px #ffd66b}
+
+  /* Buy Feature 按鈕（EX 旁邊） */
+  .buy-pill{
+    height:58px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:0 12px;cursor:pointer;
+    background:linear-gradient(180deg,#3a1a08 0%,#1a0804 100%);
+    border:1px solid #c8892a;
+    box-shadow:0 6px 0 #1a0c06, 0 0 0 2px #2a1608, 0 0 18px #ffb13a33;
+    transition:transform .1s ease, filter .15s;
+    position:relative;
+  }
+  .buy-pill:active{transform:translateY(2px);box-shadow:0 2px 0 #1a0c06, 0 0 0 2px #2a1608}
+  .buy-pill .buy-icon{font-size:22px;color:#ffd66b;text-shadow:0 0 10px #ffb13a99}
+  .buy-pill .label{font-weight:700;letter-spacing:.06em;color:#ffe9a8;font-size:13px;text-transform:uppercase}
+  .buy-pill .sub{font-family:JetBrains Mono,monospace;font-size:11px;color:#ffd08a;white-space:nowrap}
+  .buy-pill.disabled{
+    filter:grayscale(0.7) brightness(0.5) !important;
+    cursor:not-allowed;
+    pointer-events:none;
+    opacity:0.5;
+  }
+
+  .tweak-mobile-btn{
+    display:none;width:32px;height:32px;border-radius:50%;cursor:pointer;
+    background:linear-gradient(180deg,#8a5a20 0%,#3a1a08 100%);
+    border:2px solid #ffd66b;color:#fff;font-size:16px;line-height:1;
+    box-shadow:0 0 0 2px #000, 0 2px 10px rgba(0,0,0,.8), 0 0 12px #ffd66bcc;
+    align-items:center;justify-content:center;
+    position:fixed;top:10px;right:10px;z-index:200;
+  }
+  .tweak-mobile-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #1a0c06, 0 0 0 2px #2a1608}
+  body.portrait .tweak-mobile-btn{display:inline-flex}
+
+  /* mobile tweaks modal */
+  #tweaksModal{
+    position:fixed;inset:0;z-index:300;display:none;
+    background:#0a0604cc;backdrop-filter:blur(4px);
+    align-items:center;justify-content:center;padding:20px;
+  }
+  #tweaksModal.on{display:flex}
+  #tweaksModal .sheet{
+    width:100%;max-width:360px;
+    background:#120c08;border:1px solid #5a371a;border-radius:12px;padding:18px;
+    box-shadow:0 20px 60px #000a, 0 0 0 2px #2a1608;
+    font-family:Oswald;color:var(--cream);
+  }
+  #tweaksModal h3{margin:0 0 12px;font-family:Cinzel;font-size:16px;letter-spacing:.2em;color:#ffd08a;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+  #tweaksModal h3 .close{cursor:pointer;font-size:20px;padding:4px 10px;background:#2a150a;border-radius:4px;border:1px solid #5a371a;color:#ffe9a8}
+  #tweaksModal label{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#a87d3c;margin:10px 0 4px}
+  #tweaksModal input[type=range]{width:100%;background:#0b0604;accent-color:#e84f2c}
+  #tweaksModal .row{display:flex;gap:6px;flex-wrap:wrap}
+  #tweaksModal button{flex:1;min-width:60px;background:#2a150a;color:#ffe9a8;border:1px solid #5a371a;border-radius:4px;padding:8px;cursor:pointer;font-family:Oswald;letter-spacing:.12em;text-transform:uppercase;font-size:11px}
+  #tweaksModal button.on{background:#b1321a;border-color:#ffb96b}
+
+  /* -------- reels frame -------- */
+  .reels-frame{
+    position:absolute;left:40px;right:40px;top:130px;height:500px;z-index:4;
+    background:
+      linear-gradient(180deg,#1a0f08 0%, #0b0604 100%);
+    border:2px solid #6a411c;border-radius:10px;
+    box-shadow:
+      0 0 0 4px #2a1608,
+      0 30px 80px #000a,
+      0 0 60px #ffb13a1a inset;
+    padding:14px;
+  }
+  .reels-frame::before{
+    content:"";position:absolute;inset:-14px;border-radius:14px;pointer-events:none;
+    background:
+      radial-gradient(circle at 0 0, #6a411c88 0 2px, transparent 3px) 0 0/40px 40px,
+      radial-gradient(circle at 100% 0, #6a411c88 0 2px, transparent 3px) 100% 0/40px 40px;
+    opacity:0;
+  }
+  /* corner rivets */
+  .rivet{position:absolute;width:14px;height:14px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#ffe28a 0%,#c8892a 45%, #5a380f 90%);
+    box-shadow:0 1px 2px #000, 0 0 0 1px #2a1608;z-index:5}
+  .rivet.tl{left:6px;top:6px}.rivet.tr{right:6px;top:6px}
+  .rivet.bl{left:6px;bottom:6px}.rivet.br{right:6px;bottom:6px}
+
+  .reels{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:6px;
+    width:100%;height:100%;
+    background:#05030200;border-radius:6px;
+  }
+  .reel{
+    position:relative;overflow:hidden;border-radius:4px;
+    background:linear-gradient(180deg,#0e0906 0%, #160d07 100%);
+    box-shadow:inset 0 0 0 1px #2a1608, inset 0 20px 30px -10px #000, inset 0 -20px 30px -10px #000;
+  }
+  .reel-strip{
+    position:absolute;left:0;right:0;top:0;display:flex;flex-direction:column;
+    will-change:transform;
+  }
+  .cell{
+    height:155px;display:grid;place-items:center;position:relative;
+    border-bottom:1px solid #00000060;
+  }
+  .cell:last-child{border-bottom:0}
+  .sym{
+    width:86%;height:86%;display:grid;place-items:center;position:relative;
+    border-radius:10px;
+    background:linear-gradient(180deg,#211208 0%, #0d0705 100%);
+    box-shadow:inset 0 0 0 1px #3a2212, inset 0 0 28px #00000088, 0 4px 10px #0008;
+  }
+  .sym .glyph{
+    font-family:Cinzel,serif;font-weight:800;font-size:64px;line-height:1;
+    text-shadow:0 2px 0 #00000080, 0 0 18px #0008;
+  }
+  .sym .icon{font-size:60px;line-height:1}
+  .sym .label{
+    position:absolute;bottom:6px;right:8px;font-family:Oswald;font-size:10px;
+    letter-spacing:.08em;color:#ffd08a99;text-transform:uppercase
+  }
+
+  /* symbol colors */
+  .sym.A  .glyph{background:linear-gradient(180deg,#ffe28a,#c8892a);-webkit-background-clip:text;color:transparent}
+  .sym.K  .glyph{background:linear-gradient(180deg,#e8d6a8,#7a5815);-webkit-background-clip:text;color:transparent}
+  .sym.Q  .glyph{background:linear-gradient(180deg,#e8b7a8,#8a3218);-webkit-background-clip:text;color:transparent}
+  .sym.J  .glyph{background:linear-gradient(180deg,#b8d9e8,#184a6a);-webkit-background-clip:text;color:transparent}
+  .sym.TE .glyph{background:linear-gradient(180deg,#b8e8c0,#185a2a);-webkit-background-clip:text;color:transparent}
+  .sym.M1 .sym-art, .sym.M2 .sym-art, .sym.M3 .sym-art, .sym.M4 .sym-art, .sym.M5 .sym-art{font-size:60px}
+  .sym.SCATTER{background:linear-gradient(180deg,#3a1c0a,#0a0503); box-shadow:inset 0 0 0 2px #c8892a, inset 0 0 28px #00000088, 0 4px 14px #000}
+  .sym.WILD{background:
+      radial-gradient(ellipse at 50% 30%, #6a1708 0%, #2a0a05 70%);
+      box-shadow:inset 0 0 0 2px #e84f2c, 0 0 20px #e84f2c66, inset 0 0 30px #00000088}
+
+  /* high-tier badge ring */
+  .sym.hi::before{
+    content:"";position:absolute;inset:-2px;border-radius:12px;
+    background:conic-gradient(from 0deg,#ffe28a,#c8892a,#ffe28a,#7a5815,#ffe28a);
+    filter:blur(.5px);z-index:-1;opacity:.4
+  }
+
+  /* gold frame (滾停金框) */
+  .cell.gold .sym{
+    box-shadow:
+      inset 0 0 0 2px #ffd66b,
+      0 0 0 2px #ffd66b,
+      0 0 24px #ffd66b99,
+      inset 0 0 30px #ffb24066;
+    animation:goldPulse 1s ease-in-out infinite;
+  }
+  @keyframes goldPulse{
+    0%,100%{box-shadow:inset 0 0 0 2px #ffd66b,0 0 0 2px #ffd66b,0 0 18px #ffd66b88, inset 0 0 30px #ffb24055}
+    50%{box-shadow:inset 0 0 0 2px #fff2b8,0 0 0 2px #fff2b8,0 0 34px #ffdd77, inset 0 0 40px #ffc25588}
+  }
+
+  /* win highlight */
+  .cell.win .sym{
+    animation:winPop .6s ease;
+    box-shadow:0 0 0 3px #ffe26a, 0 0 40px #ffcf4daa, inset 0 0 30px #ffb24088;
+  }
+  @keyframes winPop{
+    0%{transform:scale(1)}
+    30%{transform:scale(1.12)}
+    60%{transform:scale(.96)}
+    100%{transform:scale(1)}
+  }
+  .cell.dim .sym{filter:brightness(.35) saturate(.6)}
+  .cell.explode .sym{animation:explode .35s forwards ease-in}
+  @keyframes explode{
+    0%{transform:scale(1);opacity:1}
+    60%{transform:scale(1.25);opacity:.8;filter:brightness(2) saturate(2)}
+    100%{transform:scale(.2);opacity:0;filter:brightness(3)}
+  }
+  .spark{position:absolute;inset:0;pointer-events:none}
+  .spark::before,.spark::after{
+    content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;
+    background:#ffe26a;box-shadow:0 0 14px #ffd66b;transform:translate(-50%,-50%) scale(0);opacity:0;
+  }
+  .cell.explode .spark::before{animation:sp1 .6s ease-out forwards}
+  .cell.explode .spark::after{animation:sp2 .6s ease-out forwards}
+  @keyframes sp1{0%{transform:translate(-50%,-50%) scale(0);opacity:1}100%{transform:translate(-120%,-180%) scale(2);opacity:0}}
+  @keyframes sp2{0%{transform:translate(-50%,-50%) scale(0);opacity:1}100%{transform:translate(60%,140%) scale(2);opacity:0}}
+
+  /* mask reel for 瞇牌 */
+  .reel.suspense::before{
+    content:"";position:absolute;inset:0;background:#000000d6;z-index:4;pointer-events:none;
+    animation:flicker 1.2s ease-in-out infinite;
+  }
+  @keyframes flicker{0%,100%{opacity:.85}50%{opacity:.6}}
+
+  /* row index label between reels */
+  .reel-label{
+    position:absolute;top:-2px;left:50%;transform:translateX(-50%);
+    font-family:JetBrains Mono,monospace;font-size:9px;color:#6a411c;letter-spacing:.1em;
+  }
+
+  /* -------- bottom control bar -------- */
+  .bottom{
+    position:absolute;left:40px;right:40px;bottom:28px;height:140px;z-index:5;
+    display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:center;
+  }
+  .winframe{
+    height:100%;border-radius:8px;position:relative;
+    background:linear-gradient(180deg,#1a0f08 0%, #0b0604 100%);
+    border:1px solid #5a371a;
+    box-shadow:0 0 0 2px #2a1608, 0 10px 24px #0008, 0 0 40px #ffb13a11 inset;
+    padding:14px 18px;
+    display:grid;grid-template-rows:auto 1fr;gap:6px;
+  }
+  .wf-head{display:flex;justify-content:space-between;align-items:center;font-family:Oswald;font-size:12px;letter-spacing:.14em;color:#a87d3c;text-transform:uppercase}
+  .wf-body{display:flex;align-items:center;justify-content:center;position:relative;min-height:60px}
+  .wf-msg{
+    font-family:Cinzel,serif;font-weight:700;font-size:26px;letter-spacing:.08em;
+    color:#c9a566;text-transform:uppercase;
+    text-shadow:0 1px 0 #000;
+    white-space:nowrap;
+  }
+  .wf-win{
+    font-family:JetBrains Mono,monospace;font-weight:700;font-size:42px;
+    background:linear-gradient(180deg,#ffe28a 0%,#c8892a 50%,#7a5815 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 20px #ffb24055;
+    display:none;
+  }
+  .wf-win.on{display:block;animation:winScale .5s ease}
+  @keyframes winScale{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+  .wf-lv{
+    position:absolute;top:6px;right:10px;font-family:Cinzel,serif;font-size:12px;
+    padding:3px 8px;border-radius:3px;border:1px solid #5a371a;color:#ffd08a;letter-spacing:.1em;
+    display:none;
+  }
+  .wf-lv.on{display:block}
+  .wf-lv.lv2{color:#ffb26b;border-color:#b1321a}
+  .wf-lv.lv3{color:#fff2b8;border-color:#ffb26b;background:#3a1208;box-shadow:0 0 20px #e84f2c88}
+
+  /* spin cluster */
+  .spin-cluster{
+    width:230px;height:230px;display:grid;place-items:center;position:relative;
+  }
+  .spin-btn{
+    width:190px;height:190px;border-radius:50%;cursor:pointer;position:relative;
+    background:
+      radial-gradient(circle at 50% 30%, #ffe28a 0%, #c8892a 40%, #7a4a10 75%, #2a1608 100%);
+    box-shadow:
+      0 0 0 6px #2a1608,
+      0 0 0 9px #6a411c,
+      0 0 0 12px #1a0d06,
+      0 14px 0 #1a0d06,
+      0 20px 40px #000a,
+      inset 0 0 30px #00000055,
+      inset 0 4px 10px #ffffff66;
+    display:grid;place-items:center;transition:transform .08s ease, box-shadow .08s ease;
+    color:#1a0d06;
+  }
+  .spin-btn:active{transform:translateY(6px);box-shadow:0 0 0 6px #2a1608,0 0 0 9px #6a411c,0 0 0 12px #1a0d06,0 8px 0 #1a0d06,0 10px 20px #000a,inset 0 0 30px #00000055,inset 0 4px 10px #ffffff66}
+  .spin-btn[data-mode="spinning"]{cursor:pointer;background:radial-gradient(circle at 50% 30%, #ff8f4a 0%, #b1321a 45%, #6a1708 80%, #1a0604 100%);color:#ffe9a8}
+  .spin-btn .ring{
+    position:absolute;inset:-18px;border-radius:50%;border:2px dashed #6a411c;
+    animation:rotate 12s linear infinite;pointer-events:none
+  }
+  @keyframes rotate{to{transform:rotate(360deg)}}
+  .spin-btn .cap{
+    font-family:Cinzel,serif;font-weight:800;font-size:26px;letter-spacing:.08em;
+    text-shadow:0 1px 0 #ffe9a8;
+  }
+  .spin-btn .sub{
+    font-family:JetBrains Mono,monospace;font-size:11px;margin-top:2px;color:#2a1608;letter-spacing:.12em
+  }
+  .spin-btn[data-mode="spinning"] .cap,.spin-btn[data-mode="spinning"] .sub{color:#ffe9a8;text-shadow:none}
+
+  /* right side: bet/balance/auto */
+  .side-right{
+    display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;gap:10px;height:100%;
+  }
+  .stat{
+    background:linear-gradient(180deg,#1a0f08 0%, #0b0604 100%);
+    border:1px solid #5a371a;border-radius:6px;padding:8px 12px;
+    box-shadow:0 0 0 2px #2a1608, inset 0 0 20px #00000066;
+    display:grid;gap:2px;min-height:50px;
+  }
+  .stat .k{font-family:Oswald;font-size:10px;letter-spacing:.18em;color:#a87d3c;text-transform:uppercase}
+  .stat .v{font-family:JetBrains Mono,monospace;font-weight:700;font-size:18px;color:#ffe28a}
+  .stat.full{grid-column:span 2}
+
+  .minibtn{
+    background:linear-gradient(180deg,#2a150a 0%,#140a05 100%);
+    border:1px solid #5a371a;border-radius:6px;cursor:pointer;
+    color:var(--cream);font-family:Oswald;font-size:12px;letter-spacing:.1em;
+    padding:10px;text-transform:uppercase;min-height:50px;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 3px 0 #1a0c06, 0 0 0 2px #2a1608;
+    transition:transform .08s ease;
+  }
+  .minibtn:active{transform:translateY(2px);box-shadow:0 1px 0 #1a0c06, 0 0 0 2px #2a1608}
+  .minibtn.on{background:linear-gradient(180deg,#b1321a 0%,#6a1708 100%);border-color:#ffb96b;color:#ffe9a8}
+  .bet-adj{display:flex;align-items:center;gap:4px;width:100%;justify-content:space-between}
+  .bet-adj button{
+    width:26px;height:26px;border-radius:4px;background:#2a1608;border:1px solid #5a371a;
+    color:#ffd08a;cursor:pointer;font-weight:700
+  }
+  .bet-adj button:active{transform:translateY(1px)}
+
+  /* -------- transition overlay (BG→FG) -------- */
+  .transition{
+    position:absolute;inset:0;z-index:20;background:radial-gradient(ellipse at center, #6a1708 0%, #1a0604 60%, #000 100%);
+    display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px;
+    animation:fadein .3s ease;
+  }
+  .transition.on{display:flex}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  .transition .t-title{
+    font-family:Cinzel,serif;font-weight:800;font-size:92px;letter-spacing:.08em;
+    background:linear-gradient(180deg,#ffe28a,#c8892a);-webkit-background-clip:text;color:transparent;
+    text-shadow:0 0 40px #ffb13a88;
+    animation:slamIn .6s cubic-bezier(.3,1.4,.4,1);
+  }
+  .transition .t-sub{font-family:Oswald;font-size:22px;letter-spacing:.4em;color:#ffd08a;text-transform:uppercase}
+  .transition .t-mult{
+    font-family:Cinzel,serif;font-weight:800;font-size:140px;
+    background:linear-gradient(180deg,#fff6d8,#ffb13a 45%, #7a3a10 100%);
+    -webkit-background-clip:text;color:transparent;
+    text-shadow:0 0 60px #ffb13a;
+    animation:slamIn .8s cubic-bezier(.3,1.4,.4,1);
+  }
+  @keyframes slamIn{0%{transform:scale(2);opacity:0}60%{transform:scale(.9)}100%{transform:scale(1);opacity:1}}
+
+  /* big win banner */
+  .bigwin{
+    position:absolute;inset:0;z-index:22;display:none;align-items:center;justify-content:center;flex-direction:column;
+    background:radial-gradient(ellipse at center,#3a0c04d0 0%,#00000000 70%);
+  }
+  .bigwin.on{display:flex;animation:fadein .3s ease}
+  .bigwin .label{
+    font-family:Cinzel,serif;font-weight:800;font-size:84px;letter-spacing:.1em;
+    background:linear-gradient(180deg,#fff6d8,#ffb13a 50%, #7a3a10 100%);
+    -webkit-background-clip:text;color:transparent;
+    animation:slamIn .5s cubic-bezier(.3,1.4,.4,1);
+  }
+  .bigwin .amt{
+    font-family:JetBrains Mono,monospace;font-weight:700;font-size:64px;color:#ffe28a;margin-top:10px;
+    text-shadow:0 0 30px #ffb13a
+  }
+
+  /* FG badge */
+  .fg-badge{
+    position:absolute;left:40px;top:230px;z-index:6;
+    padding:6px 12px;border-radius:4px;background:#3a1208;color:#ffe9a8;font-family:Cinzel,serif;
+    letter-spacing:.2em;font-size:12px;border:1px solid #e84f2c;
+    box-shadow:0 0 18px #e84f2c88;display:none;
+  }
+  .fg-badge.on{display:block}
+
+  /* path / 路數 */
+  .path-counter{
+    position:absolute;left:40px;top:640px;z-index:5;
+    display:flex;align-items:center;gap:6px;padding:6px 10px;
+    background:#120c08bb;border:1px solid #3a220e;border-radius:6px;
+    font-family:Oswald;font-size:11px;color:#a87d3c;letter-spacing:.14em;text-transform:uppercase
+  }
+  .path-counter .num{font-family:JetBrains Mono;font-weight:700;color:#ffe28a;font-size:14px}
+
+  /* tweaks panel */
+  #tweaks{
+    position:fixed;right:14px;bottom:14px;z-index:100;width:300px;
+    background:#120c08f0;border:1px solid #5a371a;border-radius:10px;padding:14px;
+    box-shadow:0 20px 60px #000a, 0 0 0 2px #2a1608;
+    display:none;
+    font-family:Oswald;color:var(--cream);
+  }
+  #tweaks.on{display:block}
+  #tweaks h3{margin:0 0 10px;font-family:Cinzel;font-size:14px;letter-spacing:.2em;color:#ffd08a;text-transform:uppercase}
+  #tweaks label{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#a87d3c;margin:8px 0 4px}
+  #tweaks select, #tweaks input[type=range]{width:100%;background:#0b0604;color:#ffe28a;border:1px solid #3a220e;border-radius:4px;padding:4px;font-family:JetBrains Mono}
+  #tweaks .row{display:flex;gap:6px}
+  #tweaks button{flex:1;background:#2a150a;color:#ffe9a8;border:1px solid #5a371a;border-radius:4px;padding:6px;cursor:pointer;font-family:Oswald;letter-spacing:.12em;text-transform:uppercase;font-size:11px}
+  #tweaks button.on{background:#b1321a;border-color:#ffb96b}
+
+  /* loading */
+  #boot{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;background:#0a0604}
+  #boot .bar{width:320px;height:6px;background:#2a1608;border-radius:3px;overflow:hidden;border:1px solid #5a371a}
+  #boot .bar i{display:block;height:100%;background:linear-gradient(90deg,#c8892a,#ffd66b);width:0%;transition:width .2s linear}
+  #boot .logo-big{font-family:Cinzel;font-weight:800;font-size:46px;letter-spacing:.1em;background:linear-gradient(180deg,#ffe28a,#c8892a);-webkit-background-clip:text;color:transparent}
+  #boot .sub{font-family:Oswald;font-size:12px;letter-spacing:.4em;color:#a87d3c;text-transform:uppercase}
+  #boot .start{margin-top:18px;padding:12px 28px;background:linear-gradient(180deg,#b1321a,#6a1708);color:#ffe9a8;border:1px solid #ffb96b;border-radius:4px;font-family:Cinzel;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;font-size:14px;display:none;box-shadow:0 0 30px #e84f2c66}
+  #boot .start.on{display:block}
+
+  /* auto count */
+  .auto-badge{position:absolute;top:6px;right:6px;background:#b1321a;color:#ffe9a8;font-family:JetBrains Mono;font-size:10px;padding:2px 6px;border-radius:3px;display:none}
+  .auto-badge.on{display:block}
+
+  /* -------- PORTRAIT (mobile) layout -------- */
+  body.portrait #stage-wrap{align-items:flex-start;position:static;height:auto;min-height:100vh;overflow:visible;display:block}
+  body.portrait{overflow-y:auto !important;overflow-x:hidden !important;height:auto !important}
+  html:has(body.portrait){height:auto !important;overflow-y:auto !important;overflow-x:hidden !important}
+  body.portrait .reels-frame::before{display:none}
+  body.portrait #stage{
+    width:100vw;max-width:100vw;height:auto;min-height:100vh;
+    transform:none !important;border-radius:0;
+    box-shadow:none;box-sizing:border-box;overflow:visible;
+    display:flex;flex-direction:column;padding:10px 10px 14px;gap:10px;
+  }
+  body.portrait #stage{
+    width:100% !important;max-width:100vw !important;height:auto !important;min-height:auto;
+    padding:12px;display:flex;flex-direction:column;gap:10px;
+    box-shadow:none;border-radius:0;box-sizing:border-box;overflow:visible;
+  }
+  body.portrait #stage::before,body.portrait #stage::after{display:none}
+  body.portrait .top-bar{
+    position:static;display:grid;grid-template-columns:1fr auto auto;grid-template-rows:auto auto;gap:8px;
+    height:auto;left:auto;right:auto;top:auto;
+  }
+  body.portrait .top-bar .logo{padding:0}
+  body.portrait .logo .en{font-size:16px}
+  body.portrait .logo .zh{font-size:20px}
+  body.portrait .extra-pill{height:44px;padding:0 10px;grid-column:3;grid-row:1}
+  body.portrait .extra-pill .label{font-size:11px}
+  body.portrait .extra-pill .sub{font-size:10px}
+  body.portrait .buy-pill{height:44px;padding:0 10px;grid-column:2;grid-row:1}
+  body.portrait .buy-pill .label{font-size:11px}
+  body.portrait .buy-pill .sub{font-size:10px}
+  body.portrait .buy-pill .buy-icon{font-size:18px}
+  body.portrait .mstrip{grid-column:1 / span 3;grid-row:2;height:52px}
+  body.portrait .mcell{font-size:16px}
+
+  body.portrait .reels-frame{
+    position:static;left:auto;right:auto;top:auto;
+    height:auto;aspect-ratio:5/3;padding:6px;
+  }
+  body.portrait .reels{gap:3px}
+  body.portrait .cell{height:auto;aspect-ratio:1;}
+  body.portrait .sym .glyph{font-size:clamp(18px,5vw,36px)}
+  body.portrait .sym .icon{font-size:clamp(18px,5vw,36px) !important}
+  body.portrait .sym .label{font-size:7px;bottom:2px;right:3px}
+
+  body.portrait .path-counter{position:static;align-self:center;font-size:10px}
+  body.portrait .fg-badge{position:static;align-self:center;margin-bottom:-4px}
+
+  body.portrait .bottom{
+    position:static;left:auto;right:auto;bottom:auto;
+    height:auto;
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  }
+  body.portrait .winframe{
+    grid-column:1 / span 2;min-height:70px;padding:8px 12px;
+  }
+  body.portrait .wf-msg{font-size:16px}
+  body.portrait .wf-win{font-size:28px}
+  body.portrait .spin-cluster{
+    grid-column:1 / span 2;width:100%;height:auto;padding:6px 0;
+  }
+  body.portrait .spin-btn{
+    width:130px;height:130px;box-shadow:0 0 0 4px #2a1608,0 0 0 6px #6a411c,0 0 0 8px #1a0d06,0 10px 0 #1a0d06,0 14px 28px #000a,inset 0 0 30px #00000055,inset 0 4px 10px #ffffff66;
+  }
+  body.portrait .spin-btn .cap{font-size:22px}
+  body.portrait .side-right{
+    grid-column:1 / span 2;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto;gap:6px;height:auto;
+  }
+  body.portrait .stat{min-height:42px;padding:4px 8px}
+  body.portrait .stat .v{font-size:14px}
+  body.portrait .stat .k{font-size:9px}
+  body.portrait .stat.full{grid-column:span 3}
+  body.portrait .minibtn{min-height:42px;font-size:11px;padding:6px}
+  body.portrait #betMinus{grid-column:1 / span 2}
+
+  /* transition + bigwin stay fixed-coverage */
+  body.portrait .transition{position:fixed}
+  body.portrait .bigwin{position:fixed}
+  body.portrait .transition .t-title{font-size:48px}
+  body.portrait .transition .t-mult{font-size:80px}
+  body.portrait .bigwin .label{font-size:48px}
+  body.portrait .bigwin .amt{font-size:36px}
+
+  body.portrait #boot{position:fixed}
+  body.portrait #tweaks{width:calc(100vw - 28px);right:14px;left:14px}
+
+  /* -------- desktop: 直接顯示 420px 手機版面，不需 DevTools 模擬器 -------- */
+  body.desktop-frame #stage-wrap{
+    position:fixed !important;inset:0 !important;
+    display:flex !important;justify-content:center !important;align-items:flex-start !important;
+    overflow:auto !important;padding:20px 0 !important;
+    background:radial-gradient(ellipse at 50% 20%,#2a1106,#0b0604 60%,#000);
+  }
+  body.desktop-frame #stage{
+    width:420px !important;max-width:420px !important;
+    height:auto !important;min-height:auto !important;
+    flex-shrink:0;border-radius:12px;box-shadow:0 20px 80px #000;
+  }
+  body.desktop-frame #tweaks{
+    width:300px !important;right:14px !important;left:auto !important;bottom:14px !important;
+  }
+</style>
+</head>
+<body>
+<div id="rotate-hint" style="display:none"></div>
+
+<div id="stage-wrap">
+  <div id="stage">
+    <!-- LOGO + multiplier strip + EX -->
+    <div class="top-bar">
+      <div class="logo">
+        <div class="en">logo</div>
+      </div>
+      <div class="mstrip" id="mstrip">
+        <div class="track" id="mtrack"></div>
+      </div>
+      <button class="tweak-mobile-btn" id="tweakMobileBtn" aria-label="Tweaks" title="Tweaks">⚙</button>
+      <div class="extra-pill" id="extraBtn">
+        <div class="dot"></div>
+        <div>
+          <div class="label">Extra Bet</div>
+          <div class="sub" id="extraSub">OFF — x1~x10</div>
+        </div>
+      </div>
+      <div class="buy-pill" id="buyBtn" title="Bonus Buy — 花費 EX Bet × 50 直接進入 FG（起始 ×10）">
+        <div class="buy-icon">⚡</div>
+        <div>
+          <div class="label">Buy FG</div>
+          <div class="sub" id="buyCostShow">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FG badge -->
+    <div class="fg-badge" id="fgBadge">FREE GAME · <span id="fgLeft">0</span> LEFT</div>
+
+    <!-- reels -->
+    <div class="reels-frame">
+      <div class="rivet tl"></div><div class="rivet tr"></div>
+      <div class="rivet bl"></div><div class="rivet br"></div>
+      <div class="reels" id="reels"></div>
+    </div>
+
+    <!-- path counter -->
+    <div class="path-counter">輪帶高度 <span class="num" id="pathNum">3</span> / 5</div>
+
+    <!-- bottom -->
+    <div class="bottom">
+      <div class="winframe">
+        <div class="wf-head">
+          <span>Win Frame</span>
+          <span id="wfComboLabel">COMBO —</span>
+        </div>
+        <div class="wf-body">
+          <div class="wf-msg" id="wfMsg">PRESS SPIN TO HUNT</div>
+          <div class="wf-win" id="wfWin">0</div>
+          <div class="wf-lv" id="wfLv">LV.1</div>
+        </div>
+      </div>
+
+      <div class="spin-cluster">
+        <div class="spin-btn" id="spinBtn" data-mode="idle">
+          <div class="ring"></div>
+          <div style="text-align:center">
+            <div class="cap" id="spinCap">SPIN</div>
+            <div class="sub" id="spinSub">READY</div>
+          </div>
+          <div class="auto-badge" id="autoBadge">AUTO ×<span id="autoLeft">0</span></div>
+        </div>
+      </div>
+
+      <div class="side-right">
+        <div class="stat">
+          <div class="k">Balance</div>
+          <div class="v" id="balVal">1,000,000</div>
+        </div>
+        <div class="stat">
+          <div class="k">Total Bet</div>
+          <div class="v" id="betVal">10.00</div>
+        </div>
+        <div class="stat full">
+          <div class="k">Last Win</div>
+          <div class="v" id="lastWin">—</div>
+        </div>
+        <div class="minibtn" id="betMinus"><div class="bet-adj"><button>−</button><span id="betShow">1.00</span><button>+</button></div></div>
+        <div class="minibtn" id="autoBtn">AUTO</div>
+      </div>
+    </div>
+
+    <!-- transition / bigwin -->
+    <div class="transition" id="transition">
+      <div class="t-title">FREE GAME</div>
+      <div class="t-sub">Bring your luck · 射手上膛</div>
+      <div class="t-mult" id="tMult">×2</div>
+    </div>
+    <div class="bigwin" id="bigwin">
+      <div class="label" id="bwLabel">BIG WIN</div>
+      <div class="amt" id="bwAmt">0</div>
+    </div>
+
+    <!-- boot -->
+    <div id="boot">
+      <div class="logo-big">logo</div>
+      <div class="sub">LOADING · RELOAD · AIM</div>
+      <div class="bar"><i id="bootBar"></i></div>
+      <button class="start" id="startBtn">TAP TO START</button>
+    </div>
+  </div>
+</div>
+
+<!-- mobile tweaks modal -->
+<div id="tweaksModal">
+  <div class="sheet">
+    <h3>Tweaks <span class="close" id="tweaksModalClose">×</span></h3>
+    <label>瞇牌機率</label>
+    <input type="range" id="tw-suspense-m" min="0" max="100" value="35">
+    <label>贏分機率加成</label>
+    <input type="range" id="tw-luck-m" min="0" max="100" value="50">
+    <label>強制 FG</label>
+    <div class="row"><button id="tw-forceFg-m">Trigger FG Next Spin</button></div>
+    <label>速度</label>
+    <div class="row">
+      <button class="speed-m" data-s="1">Normal</button>
+      <button class="speed-m on" data-s="0.6">Quick</button>
+      <button class="speed-m" data-s="0.3">Turbo</button>
+    </div>
+    <label>Auto 次數</label>
+    <div class="row">
+      <button class="auton-m" data-n="10">10</button>
+      <button class="auton-m" data-n="25">25</button>
+      <button class="auton-m" data-n="50">50</button>
+      <button class="auton-m" data-n="999">∞</button>
+    </div>
+    <hr style="border:0;border-top:1px solid #3a220e;margin:12px 0">
+    <label>贏分分佈（win/bet 倍率區間機率）</label>
+    <div class="row">
+      <select id="dist-mode-m" style="flex:1;background:#0b0604;color:#ffe28a;border:1px solid #3a220e;border-radius:4px;padding:5px;font-family:JetBrains Mono;font-size:11px">
+        <option value="NORMAL">Normal</option>
+        <option value="EX">EX Bet</option>
+        <option value="BUY">Bonus Buy</option>
+      </select>
+      <select id="dist-spins-m" style="flex:1;background:#0b0604;color:#ffe28a;border:1px solid #3a220e;border-radius:4px;padding:5px;font-family:JetBrains Mono;font-size:11px">
+        <option value="10000">10k</option>
+        <option value="30000" selected>30k</option>
+        <option value="100000">100k</option>
+      </select>
+      <button id="dist-run-m">Run</button>
+    </div>
+    <div id="dist-chart-m" style="margin-top:8px;min-height:40px;font-family:Oswald;font-size:11px;color:#6a411c">點 Run 開始計算</div>
+    <div id="dist-stat-m" style="margin-top:4px;font-family:JetBrains Mono;font-size:10px;color:#a87d3c"></div>
+  </div>
+</div>
+
+<!-- tweaks panel -->
+<div id="tweaks">
+  <h3>Tweaks</h3>
+  <label>瞇牌機率</label>
+  <input type="range" id="tw-suspense" min="0" max="100" value="35">
+  <label>強制 FG (下次 Spin 進 Free Game)</label>
+  <div class="row"><button id="tw-forceFg">Trigger FG</button></div>
+  <label>贏分機率加成</label>
+  <input type="range" id="tw-luck" min="0" max="100" value="50">
+  <label>速度</label>
+  <div class="row">
+    <button class="speed" data-s="1">Normal</button>
+    <button class="speed on" data-s="0.6">Quick</button>
+    <button class="speed" data-s="0.3">Turbo</button>
+  </div>
+  <label>Auto 次數</label>
+  <div class="row">
+    <button class="auton" data-n="10">10</button>
+    <button class="auton" data-n="25">25</button>
+    <button class="auton" data-n="50">50</button>
+    <button class="auton" data-n="999">∞</button>
+  </div>
+  <hr style="border:0;border-top:1px solid #3a220e;margin:12px 0">
+  <label>贏分分佈（win/bet 倍率區間機率）</label>
+  <div class="row">
+    <select id="dist-mode" style="flex:1;background:#0b0604;color:#ffe28a;border:1px solid #3a220e;border-radius:4px;padding:5px;font-family:JetBrains Mono;font-size:11px">
+      <option value="NORMAL">Normal</option>
+      <option value="EX">EX Bet</option>
+      <option value="BUY">Bonus Buy</option>
+    </select>
+    <select id="dist-spins" style="flex:1;background:#0b0604;color:#ffe28a;border:1px solid #3a220e;border-radius:4px;padding:5px;font-family:JetBrains Mono;font-size:11px">
+      <option value="10000">10k</option>
+      <option value="30000" selected>30k</option>
+      <option value="100000">100k</option>
+    </select>
+    <button id="dist-run" style="flex:1">Run</button>
+  </div>
+  <div id="dist-chart" style="margin-top:8px;min-height:40px;font-family:Oswald;font-size:11px;color:#6a411c">點 Run 開始計算</div>
+  <div id="dist-stat" style="margin-top:4px;font-family:JetBrains Mono;font-size:10px;color:#a87d3c"></div>
+</div>
+
+<script>
+/* ==========================================================
+   Fortune X Hunter — slot demo engine
+   - 7 reels × 3 rows visible (cascade style per spec)
+   - Symbols: TE J Q K A  +  M1~M5  +  WILD  +  VAULT(SCATTER)
+   - Win detection: pay-any by count (≥3 matching symbols anywhere, + wilds)
+     — feel of cascade消除 like the spec (消除→補牌→倍數+1)
+   - Multiplier strip up top, WinFrame under reels, transition to FG
+   ========================================================== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ---------- state ---------- */
+const state = {
+  balance: 1000000,
+  bet: 1.00,          // per line unit -> total bet = bet * 10
+  extra: false,
+  mode: 'BG',         // BG | FG
+  mult: 1,
+  multIdx: 0,
+  spinning: false,
+  auto: 0,
+  speed: 0.6,
+  fgLeft: 0,
+  fgBonusAdded: 0,  // 當前 FG session 已透過 re-trigger 累計加送的場次
+  boughtFG: false,  // 此次 FG 是否由 Bonus Buy 觸發
+  bgSnapshot: null, // Buy 前 BG 的 {grid, multIdx} 快照，FG 結束時復原
+  totalWin: 0,
+  lastGrid: null,
+  suspenseP: 0.35,
+  luck: 0.50,
+  forceFg: false,
+  path: 3,
+};
+
+/* ---------- symbols ---------- */
+// Basic symbols. Higher tier = rarer & higher value.
+// Use letters/glyphs only (no copyrighted art) — placeholders to be replaced by real art.
+// Pay 陣列索引對應 credit 派彩：
+//   index 0~2：未達門檻（0 credit）
+//   index 3：3 顆派彩
+//   index 4：4 顆派彩
+//   index 5：5 顆派彩
+//   index 6：6 顆（含）以上派彩
+const SYMBOLS = {
+  // 字牌（Face cards）—— pay 照賠率表
+  TE: {tier:1, glyph:'10', label:'TEN',   pay:[0,0,0, 5, 10, 15, 20]},
+  J:  {tier:1, glyph:'J',  label:'JACK',  pay:[0,0,0, 5, 10, 15, 20]},
+  Q:  {tier:1, glyph:'Q',  label:'QUEEN', pay:[0,0,0, 5, 15, 25, 40]},
+  K:  {tier:2, glyph:'K',  label:'KING',  pay:[0,0,0, 5, 15, 25, 40]},
+  A:  {tier:2, glyph:'A',  label:'ACE',   pay:[0,0,0,10, 20, 40, 60]},
+  // 高階符號（M1 最高 → M5 最低）
+  M5: {tier:3, icon:'❖', label:'M5',      pay:[0,0,0,10, 25, 50, 80]},
+  M4: {tier:3, icon:'◈', label:'M4',      pay:[0,0,0,15, 30, 60,100]},
+  M3: {tier:3, icon:'✦', label:'M3',      pay:[0,0,0,15, 40, 75,120]},
+  M2: {tier:4, icon:'★', label:'M2',      pay:[0,0,0,20, 50,100,160]},
+  M1: {tier:4, icon:'✪', label:'M1',      pay:[0,0,0,25, 60,120,200]},
+  // 特殊符號（WILD 跟 M1 同派彩；但只替代 M1-M5 不替代字牌）
+  WILD:   {tier:5, icon:'♛', label:'WILD',  pay:[0,0,0,25, 60,120,200]},
+  SCATTER:{tier:0, icon:'▣', label:'VAULT', pay:[0,0,0, 0,  0,  0,  0]},
+};
+
+// Weighted pool — 經 50k×3 Monte Carlo 調整（均值 96.27%，FG 觸發率 1/252）。
+// WILD 限制替代於 M1-M5（detectWins 裡實作），面卡下修 ~55% 抑制 from-left 連線頻率。
+// SCATTER 2.5 讓 FG 約 1/250 spin 觸發；FG 高階 -10% 補償 RTP。
+const BG_POOL = [
+  ['TE',10],['J',10],['Q',8],['K',6],['A',5],
+  ['M5',7],['M4',5],['M3',4],['M2',2.5],['M1',1.5],
+  ['WILD',0.75],['SCATTER',2.5],
+];
+const FG_POOL = [
+  ['TE',7],['J',7],['Q',6],['K',5],['A',4],
+  ['M5',9],['M4',7.2],['M3',5.4],['M2',3.6],['M1',2.25],
+  ['WILD',2.7],['SCATTER',2.5],
+];
+function pickSym(pool){
+  const total = pool.reduce((a,b)=>a+b[1],0);
+  let r = Math.random()*total;
+  for(const [k,w] of pool){ if((r-=w)<=0) return k; }
+  return pool[0][0];
+}
+
+/* ---------- multiplier list ----------
+   規格 (p.2)：每次 cascade 推進一格；達最高倍率後「顯示為一圈」循環回 ×1     */
+const BG_NORMAL_MULTS = [1,2,3,4,5];
+const BG_EX_MULTS =     [1,2,3,4,5,6,7,8,9,10];
+const FG_NORMAL_MULTS = [2,4,6,8,10];
+const FG_EX_MULTS =     [2,4,6,8,10,12,14,16,18,20];
+// Bonus Buy 進 FG 專用倍率：省略低倍，直接從 ×10 起跳高倍能見度提升
+const BUY_FG_MULTS =    [10,12,14,16,18,20];
+
+/* ---------- RTP 校正係數 ----------
+   規格 p.2：Pay($) = Denom × Pay(Credit)。Denom 即為實際 credit→$ 換算率。
+   此數值為內部 math-layer 折扣，控制 RTP 到目標 96-98%；
+   賠率表對玩家顯示的 credit 值保持不變。
+   Normal vs EX 因倍率上限與下注成本結構不同（EX 下注×2 但 mult 平均只 1.83x），
+   所以兩者需要不同的 factor 才能同步落在 96-98% 區間。                   */
+const PAYOUT_FACTOR_NORMAL = 0.54;
+const PAYOUT_FACTOR_EX     = 0.84;  // EX 成本 3×（非 2×），需要對應提高 factor 補回 RTP
+const PAYOUT_FACTOR_BUY    = 0.76;  // Buy FG：高倍陣列 + 達頂卡 ×20（非循環），調低 factor 讓 Buy 獨立 RTP ~96-97%
+function currentPayoutFactor(){
+  if(state.boughtFG) return PAYOUT_FACTOR_BUY;
+  return state.extra ? PAYOUT_FACTOR_EX : PAYOUT_FACTOR_NORMAL;
+}
+function currentMults(){
+  if(state.mode==='FG'){
+    if(state.boughtFG) return BUY_FG_MULTS;  // Bonus Buy 專用高倍陣列
+    return state.extra?FG_EX_MULTS:FG_NORMAL_MULTS;
+  }
+  return state.extra?BG_EX_MULTS:BG_NORMAL_MULTS;
+}
+
+/* ---------- build DOM ---------- */
+const REEL_CT = 5, ROWS = 3;
+
+function buildReels(){
+  const root = $('#reels'); root.innerHTML = '';
+  for(let r=0;r<REEL_CT;r++){
+    const reel = document.createElement('div');
+    reel.className='reel'; reel.dataset.r=r;
+    const strip = document.createElement('div');
+    strip.className='reel-strip';
+    reel.appendChild(strip);
+    root.appendChild(reel);
+  }
+}
+// icon 顏色對照表（高階符號 + WILD/SCATTER）
+const ICON_STYLES = {
+  WILD:    {color:'#ffe9a8', shadow:'#e84f2caa'},
+  SCATTER: {color:'#ffd66b', shadow:'#ffb13a88'},
+  M1:      {color:'#ffe9a8', shadow:'#e84f2c88'},  // 紅金
+  M2:      {color:'#ffd08a', shadow:'#c8562c88'},  // 橘金
+  M3:      {color:'#ffbf8a', shadow:'#b1321a88'},  // 橘
+  M4:      {color:'#e8b7a8', shadow:'#8a321888'},  // 粉玫瑰
+  M5:      {color:'#d6a87a', shadow:'#7a481888'},  // 古銅
+};
+function makeSymEl(key){
+  const d = document.createElement('div');
+  d.className = 'sym '+key;
+  const spec = SYMBOLS[key];
+  if (spec.glyph){
+    d.innerHTML = `<div class="glyph">${spec.glyph}</div><div class="label">${spec.label}</div>`;
+  } else {
+    const st = ICON_STYLES[key] || {color:'#ffd08a', shadow:'#00000088'};
+    d.innerHTML = `<div class="icon" style="font-size:70px;color:${st.color};text-shadow:0 0 18px ${st.shadow}">${spec.icon}</div><div class="label">${spec.label}</div>`;
+  }
+  if(spec.tier>=3) d.classList.add('hi');
+  return d;
+}
+function makeCell(key){
+  const c = document.createElement('div');
+  c.className='cell'; c.dataset.sym=key;
+  c.appendChild(makeSymEl(key));
+  const sp = document.createElement('div'); sp.className='spark';
+  c.appendChild(sp);
+  return c;
+}
+
+/* initial grid */
+function randomGrid(pool=BG_POOL){
+  const g = [];
+  for(let r=0;r<REEL_CT;r++){
+    const col=[];
+    for(let y=0;y<ROWS;y++) col.push(pickSym(pool));
+    g.push(col);
+  }
+  return g;
+}
+function renderGrid(grid, goldSet=new Set()){
+  $$('.reel').forEach((reel,ri)=>{
+    const strip = reel.querySelector('.reel-strip');
+    strip.innerHTML='';
+    strip.style.transform = 'translateY(0)';
+    for(let y=0;y<ROWS;y++){
+      const cell = makeCell(grid[ri][y]);
+      if(goldSet.has(ri+':'+y)) cell.classList.add('gold');
+      strip.appendChild(cell);
+    }
+  });
+}
+
+/* ---------- multiplier strip render ---------- */
+function renderMStrip(){
+  const list = currentMults();
+  const idx = state.multIdx % list.length;
+  const t = $('#mtrack'); t.innerHTML='';
+  list.forEach((m,i)=>{
+    const c = document.createElement('div');
+    c.className='mcell'+(i===idx?' active':'');
+    c.innerHTML = `×${m}`;
+    t.appendChild(c);
+  });
+  state.mult = list[idx];
+}
+
+/* ---------- extra bet ---------- */
+function toggleExtra(){
+  state.extra = !state.extra;
+  const el = $('#extraBtn');
+  el.classList.toggle('on',state.extra);
+  $('#extraSub').textContent = state.extra? 'ON — x1~x10 · cost ×3' : 'OFF — x1~x10';
+  state.multIdx = 0;
+  renderMStrip();
+  updateBetDisplay();
+}
+
+/* ---------- bet display ---------- */
+// 規格：Normal = bet×10；EX = bet×10×3；BuyFeature = bet×10×3×50（用 EX 金額×50）
+function totalBet(){ return state.bet * 10 * (state.extra?3:1); }
+function buyFeatureCost(){ return state.bet * 10 * 3 * 50; }
+function updateBetDisplay(){
+  $('#betShow').textContent = state.bet.toFixed(2);
+  $('#betVal').textContent  = totalBet().toFixed(2);
+  $('#balVal').textContent  = formatMoney(state.balance);
+  // Buy 按鈕：EX ON 時禁用；更新成本顯示
+  const buyBtn = $('#buyBtn');
+  if(buyBtn){
+    const cost = buyFeatureCost();
+    $('#buyCostShow').textContent = cost.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    buyBtn.classList.toggle('disabled', state.extra || state.mode==='FG');
+  }
+}
+function formatMoney(n){
+  // 統一以兩位小數呈現，並加上千分位逗號，避免中獎後小數被截掉
+  return Number(n).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+/* ---------- spin flow ---------- */
+async function spin(){
+  if(state.spinning) return;
+  const bet = totalBet();
+  if(state.mode!=='FG' && state.balance < bet){ flashMsg('BALANCE LOW'); return; }
+
+  state.spinning = true;
+  $('#spinBtn').dataset.mode='spinning';
+  $('#spinCap').textContent = state.mode==='FG' ? 'FREE' : 'STOP';
+  $('#spinSub').textContent = 'REELS HOT';
+  $('#wfWin').classList.remove('on');
+  $('#wfLv').classList.remove('on','lv2','lv3');
+  $('#wfMsg').style.display='block';
+  $('#wfMsg').textContent = state.mode==='FG' ? 'FREE GAME · GOOD HUNT' : 'AIM · HUNT · WIN';
+  $('#wfComboLabel').textContent = 'COMBO —';
+
+  if(state.mode!=='FG'){
+    state.balance -= bet;
+    updateBetDisplay();
+  }
+
+  const pool = state.mode==='FG' ? FG_POOL : BG_POOL;
+
+  // spin phase
+  const grid = randomGrid(pool);
+
+  // scatter-decide if we should promise a cascade win
+  if(state.forceFg){ // force scatters so FG triggers
+    for(let i=0;i<4;i++){
+      const r = Math.floor(Math.random()*REEL_CT);
+      const y = Math.floor(Math.random()*ROWS);
+      grid[r][y]='SCATTER';
+    }
+    state.forceFg=false;
+  } else if(Math.random() < state.luck*0.35){
+    // boost: add extra copies of some symbol（從 M5~M1 / WILD 抽一個）
+    const boost = pickSym([['M5',4],['M4',3],['M3',3],['M2',2],['M1',1],['WILD',1]]);
+    const need = 6 + Math.floor(Math.random()*5);
+    for(let i=0;i<need;i++){
+      const r = Math.floor(Math.random()*REEL_CT);
+      const y = Math.floor(Math.random()*ROWS);
+      grid[r][y]=boost;
+    }
+  }
+
+  // gold frames sometimes on high-tier positions
+  const gold = new Set();
+  const GOLD_ELIGIBLE = ['M1','M2','M3','M4','M5','WILD'];
+  for(let r=0;r<REEL_CT;r++)for(let y=0;y<ROWS;y++){
+    if(Math.random()<0.06 && GOLD_ELIGIBLE.includes(grid[r][y])) gold.add(r+':'+y);
+  }
+
+  await spinAnimate(grid, gold);
+
+  // cascades
+  let workGrid = grid.map(c=>c.slice());
+  let totalWin = 0;
+  let combo = 0;
+  while(true){
+    const wins = detectWins(workGrid);
+    if(!wins.winPositions.size) break;
+    combo++;
+    $('#wfComboLabel').textContent = `COMBO ×${combo}`;
+    // dim other cells, flash win cells
+    highlightWins(workGrid, wins.winPositions);
+    await sleep(500*state.speed);
+    // apply multiplier + RTP 校正係數（Denom × PAYOUT_FACTOR）
+    const raw = wins.payout * (state.bet);
+    const add = raw * state.mult * currentPayoutFactor();
+    totalWin += add;
+    showWin(totalWin);
+    // increment multiplier (per spec: 消除後補牌時，演出倍數變化)
+    bumpMult();
+    await sleep(400*state.speed);
+    // explode + refill（把 gold set 一起帶入，保留未中獎位置的金框）
+    await explodeAndRefill(workGrid, wins.winPositions, pool, gold);
+  }
+
+  // scatter check — BG 觸發 FG，FG 中則 re-trigger 加場
+  const scatters = countScatters(workGrid);
+  if(scatters>=4){
+    await sleep(500*state.speed);
+    if(state.mode==='BG'){
+      await triggerFreeGame(scatters);
+    } else {
+      await retriggerFreeGame(scatters);
+    }
+  }
+
+  if(totalWin>0){
+    state.balance += totalWin;
+    state.totalWin += totalWin;
+    // keep multiplier per spec (若有贏分保留)
+    // trigger BigWin banners
+    const mult = totalWin / totalBet();
+    if(mult>=30) showBigWin('SUPER WIN', totalWin);
+    else if(mult>=15) showBigWin('MEGA WIN', totalWin);
+    else if(mult>=6) showBigWin('BIG WIN', totalWin);
+  } else {
+    // 無贏分：EX 保留規則（↑1 次），Normal 重置
+    // boughtFG 與 EX 同規則：-1 階保留；Normal：重置 0
+    if(state.extra || state.boughtFG){
+      state.multIdx = Math.max(0, state.multIdx-1);
+    } else {
+      state.multIdx = 0;
+    }
+    renderMStrip();
+  }
+  updateBetDisplay();
+  $('#lastWin').textContent = totalWin>0 ? totalWin.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+
+  // 儲存本次最終盤面（BG spin 後的 snapshot 來源）
+  if(state.mode==='BG'){
+    state.lastGrid = workGrid.map(c => c.slice());
+  }
+
+  // FG countdown
+  if(state.mode==='FG'){
+    state.fgLeft--;
+    $('#fgLeft').textContent = state.fgLeft;
+    if(state.fgLeft<=0){
+      await sleep(600);
+      await endFreeGame();
+    }
+  }
+
+  state.spinning=false;
+  $('#spinBtn').dataset.mode='idle';
+  $('#spinCap').textContent='SPIN';
+  $('#spinSub').textContent='READY';
+  $('#wfMsg').textContent = state.mode==='FG' ? 'FREE GAME · GOOD HUNT' : 'AIM · HUNT · WIN';
+
+  if(state.auto>0 && !state.spinning){
+    state.auto--;
+    $('#autoLeft').textContent = state.auto;
+    if(state.auto<=0){$('#autoBadge').classList.remove('on');$('#autoBtn').classList.remove('on');}
+    setTimeout(()=>spin(), 300);
+  }
+}
+
+function bumpMult(){
+  const list = currentMults();
+  // 規格 p.2：倍數顯示為一圈，達最高倍率後循環回 ×1
+  // 但 Bonus Buy 模式：達 ×20 後停在頂（不循環），後續 cascade 繼續給 ×20
+  if(state.boughtFG){
+    state.multIdx = Math.min(state.multIdx + 1, list.length - 1);
+  } else {
+    state.multIdx = (state.multIdx + 1) % list.length;
+  }
+  renderMStrip();
+  const mcell = $$('.mcell')[state.multIdx];
+  if(mcell){
+    mcell.animate([{filter:'brightness(2)'},{filter:'brightness(1)'}],{duration:500});
+  }
+}
+
+/* ---------- spin animate ---------- */
+async function spinAnimate(finalGrid, goldSet){
+  const reels = $$('.reel');
+  const anticipate = shouldSuspense(finalGrid);
+  // measure actual cell height — portrait uses aspect-ratio:1 so height != 155
+  const probeCell = reels[0].querySelector('.cell');
+  const H = probeCell ? probeCell.getBoundingClientRect().height : 155;
+  const LOOP_TILES = 12;
+  const pool = state.mode==='FG' ? FG_POOL : BG_POOL;
+
+  // Rhythm tuned to reference recording: quick punchy start, clear beat per reel stop.
+  const spinBase = 480;             // reel 0 continuous-spin
+  const spinStep = 220;             // tighter stagger → snappier rhythm
+  const stopMs   = 380;             // faster settle, more "snap"
+  const spinMs = Array.from({length:REEL_CT},(_,i)=> (spinBase + i*spinStep) * state.speed);
+  if(anticipate) spinMs[REEL_CT-1] += 1400*state.speed;
+
+  // Strip structure (TOP→BOTTOM scroll):
+  //  [ ROWS final ][ LOOP_TILES random ][ LOOP_TILES random (dup) ]
+  //  We start with strip shifted UP so band B is in viewport, then animate DOWNWARD
+  //  (translateY increases) so symbols visually fall top→bottom. Final state: translateY(0)
+  //  so the FINAL rows (at top of strip) sit in the viewport.
+  const startY = -(2*LOOP_TILES)*H;       // shows last band initially
+  const loopFromY = -(2*LOOP_TILES)*H;    // band B start
+  const loopToY   = -(LOOP_TILES)*H;      // band A start (one band lower visually = scrolled down)
+  const finalY    = 0;                    // final rows sit at top
+  reels.forEach((reel,ri)=>{
+    const strip = reel.querySelector('.reel-strip');
+    strip.style.transition='none';
+    strip.innerHTML='';
+    // final rows at TOP
+    for(let y=0;y<ROWS;y++){
+      const c = makeCell(finalGrid[ri][y]);
+      if(goldSet.has(ri+':'+y)) c.classList.add('gold');
+      strip.appendChild(c);
+    }
+    // band A (random)
+    for(let i=0;i<LOOP_TILES;i++) strip.appendChild(makeCell(pickSym(pool)));
+    // band B (random)
+    for(let i=0;i<LOOP_TILES;i++) strip.appendChild(makeCell(pickSym(pool)));
+    strip.style.transform = `translateY(${startY}px)`;
+    reel.classList.add('spinning');
+  });
+  await new Promise(r => requestAnimationFrame(r));
+  void reels[0].offsetHeight;
+
+  // PHASE 1: continuous loop, animating DOWNWARD (loopFromY → loopToY)
+  const LOOP_DUR = 260;
+  function startLoop(strip){
+    strip.style.transition = `transform ${LOOP_DUR}ms linear`;
+    strip.style.transform = `translateY(${loopToY}px)`;
+  }
+  reels.forEach(r => startLoop(r.querySelector('.reel-strip')));
+
+  const stopFlags = new Array(REEL_CT).fill(false);
+  reels.forEach((reel,ri)=>{
+    const strip = reel.querySelector('.reel-strip');
+    strip.addEventListener('transitionend', function handler(){
+      if(stopFlags[ri]){ strip.removeEventListener('transitionend',handler); return; }
+      // seamless jump back and restart loop downward
+      strip.style.transition='none';
+      strip.style.transform=`translateY(${loopFromY}px)`;
+      void strip.offsetHeight;
+      strip.style.transition = `transform ${LOOP_DUR}ms linear`;
+      strip.style.transform = `translateY(${loopToY}px)`;
+    });
+  });
+
+  // PHASE 2: stop reels sequentially — glide DOWN to finalY (0)
+  for(let ri=0; ri<REEL_CT; ri++){
+    const waitMs = ri===0 ? spinMs[0] : spinMs[ri]-spinMs[ri-1];
+    if(ri===REEL_CT-1 && anticipate){
+      reels[ri].classList.add('suspense');
+      $('#wfMsg').textContent='瞇牌 · HOLD YOUR BREATH';
+    }
+    await sleep(waitMs);
+
+    stopFlags[ri] = true;
+    const strip = reels[ri].querySelector('.reel-strip');
+    strip.style.transition = `transform ${stopMs*state.speed}ms cubic-bezier(.15,.55,.2,1)`;
+    strip.style.transform = `translateY(${finalY}px)`;
+    reels[ri].classList.remove('spinning');
+    await sleep(stopMs*state.speed);
+    if(ri===REEL_CT-1 && anticipate) reels[ri].classList.remove('suspense');
+    // bounce — overshoot downward then settle
+    strip.animate([
+      {transform:`translateY(${finalY+8}px)`},
+      {transform:`translateY(${finalY}px)`}
+    ],{duration:180,easing:'cubic-bezier(.2,1.6,.4,1)'});
+  }
+
+  // Snap to clean final grid
+  reels.forEach((reel,ri)=>{
+    const strip = reel.querySelector('.reel-strip');
+    strip.style.transition='none';
+    strip.innerHTML='';
+    strip.style.transform='translateY(0)';
+    for(let y=0;y<ROWS;y++){
+      const c = makeCell(finalGrid[ri][y]);
+      if(goldSet.has(ri+':'+y)) c.classList.add('gold');
+      strip.appendChild(c);
+    }
+  });
+
+  // ALL reels landed — hold the completed board visible so player sees full grid
+  // before cascades kick in. Don't scale this by speed (we want the same pause
+  // even on Turbo so it reads as "stop → show → resolve").
+  await sleep(650);
+}
+
+function shouldSuspense(grid){
+  // 3+ of same high-tier in first 3 reels any row -> suspense
+  const tiers = ['M1','M2','M3','M4','M5','WILD'];
+  const counts = {};
+  for(let r=0;r<3;r++)for(let y=0;y<ROWS;y++){
+    const s=grid[r][y]; if(tiers.includes(s)) counts[s]=(counts[s]||0)+1;
+  }
+  if(Math.max(0,...Object.values(counts))>=3) return Math.random()<state.suspenseP;
+  return false;
+}
+
+/* ---------- win detection (from-left 連線) ----------
+   規則：每個派彩符號 sym 從 reel 1 開始向右掃；每個 reel 至少要有 1 個 sym 或 WILD
+   才算延續，遇到 0 個就斷；累計在連續 reel 上的符號總數 (3~6+) 查表派彩。
+   WILD 只替代高階符號 M1~M5（不替代字牌 TE/J/Q/K/A），這是 RTP 平衡的關鍵。
+   WILD 自己也可當主符號（純 WILD 連線）。                                         */
+const WILD_SUBSTITUTES_FOR = new Set(['M1','M2','M3','M4','M5']);
+function detectWins(grid){
+  let winPositions = new Set();
+  let payout = 0;
+
+  const candidates = Object.keys(SYMBOLS).filter(s => s !== 'SCATTER');
+
+  for(const sym of candidates){
+    // isMatch 規則：
+    //   sym===WILD → 只配對 WILD 自己
+    //   sym 是 M1~M5 → sym 或 WILD 都算
+    //   sym 是字牌 → 只配對 sym 本身（WILD 不替代）
+    const isMatch = (s) => {
+      if(s === sym) return true;
+      if(sym === 'WILD') return false;
+      return s === 'WILD' && WILD_SUBSTITUTES_FOR.has(sym);
+    };
+    let totalCount = 0;
+    const positions = [];
+    for(let r=0; r<REEL_CT; r++){
+      let reelCount = 0;
+      for(let y=0; y<ROWS; y++){
+        if(isMatch(grid[r][y])){
+          reelCount++;
+          positions.push([r,y]);
+        }
+      }
+      // 該 reel 沒有符合 → 連線中斷
+      if(reelCount === 0) break;
+      totalCount += reelCount;
+    }
+    if(totalCount >= 3){
+      const tier = Math.min(6, totalCount);
+      const pay = SYMBOLS[sym].pay[tier] || 0;
+      if(pay > 0){
+        payout += pay;
+        positions.forEach(p => winPositions.add(p[0]+':'+p[1]));
+      }
+    }
+  }
+  return {winPositions, payout};
+}
+function highlightWins(grid, winSet){
+  $$('.cell').forEach((c,i)=>{
+    const r = (i/ROWS)|0, y = i%ROWS;
+    if(winSet.has(r+':'+y)) c.classList.add('win');
+    else c.classList.add('dim');
+  });
+}
+async function explodeAndRefill(grid, winSet, pool, goldSet){
+  $$('.cell').forEach(c=>c.classList.remove('win'));
+  // explode
+  $$('.reel').forEach((reel,ri)=>{
+    const cells = [...reel.querySelectorAll('.cell')];
+    cells.forEach((c,y)=>{
+      if(winSet.has(ri+':'+y)) c.classList.add('explode');
+    });
+  });
+  await sleep(350*state.speed);
+  // refill each column；同時把 goldSet 裡倖存的位置「下移」到補牌後的新座標
+  const newGold = new Set();
+  for(let r=0;r<REEL_CT;r++){
+    const col = grid[r];
+    const keep = [];
+    const keepGold = [];
+    for(let y=0;y<ROWS;y++){
+      if(!winSet.has(r+':'+y)){
+        keep.push(col[y]);
+        keepGold.push(goldSet ? goldSet.has(r+':'+y) : false);
+      }
+    }
+    // 從上方補入新符號（對應視覺上「掉落」到底部）
+    while(keep.length<ROWS){
+      keep.unshift(pickSym(pool));
+      keepGold.unshift(false);
+    }
+    grid[r] = keep;
+    for(let y=0;y<ROWS;y++){
+      if(keepGold[y]) newGold.add(r+':'+y);
+    }
+  }
+  // 原地更新外部 goldSet，讓下一輪 cascade 看到新座標
+  if(goldSet){
+    goldSet.clear();
+    newGold.forEach(p=>goldSet.add(p));
+  }
+  // re-render column with slide-in animation
+  $$('.reel').forEach((reel,ri)=>{
+    const strip = reel.querySelector('.reel-strip');
+    strip.innerHTML='';
+    for(let y=0;y<ROWS;y++){
+      const cell = makeCell(grid[ri][y]);
+      if(newGold.has(ri+':'+y)) cell.classList.add('gold');
+      strip.appendChild(cell);
+    }
+    strip.animate([{transform:'translateY(-60px)',opacity:.2},{transform:'translateY(0)',opacity:1}],{duration:320,easing:'cubic-bezier(.2,.7,.2,1)'});
+  });
+  $$('.cell').forEach(c=>c.classList.remove('dim','win','explode'));
+  await sleep(200*state.speed);
+}
+function countScatters(grid){
+  let n=0;
+  for(let r=0;r<REEL_CT;r++)for(let y=0;y<ROWS;y++) if(grid[r][y]==='SCATTER') n++;
+  return n;
+}
+
+/* ---------- UI helpers ---------- */
+function showWin(total){
+  const el = $('#wfWin');
+  el.classList.add('on');
+  el.textContent = total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  $('#wfMsg').style.display='none';
+  const mult = total / totalBet();
+  const lv = $('#wfLv');
+  lv.className='wf-lv on'+(mult>=20?' lv3':mult>=5?' lv2':'');
+  lv.textContent = mult>=20?'LV.3':mult>=5?'LV.2':'LV.1';
+}
+function flashMsg(m){
+  // 若此時 wfMsg 被 showWin 隱藏 (display:none)，先把它顯示回來，
+  // 並把 wfWin 關掉，確保 flash 文字看得到。
+  $('#wfMsg').style.display='block';
+  $('#wfWin').classList.remove('on');
+  $('#wfLv').classList.remove('on','lv2','lv3');
+  $('#wfMsg').textContent = m;
+  setTimeout(()=>{$('#wfMsg').textContent = state.mode==='FG'?'FREE GAME · GOOD HUNT':'AIM · HUNT · WIN';}, 1500);
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+/* ---------- FreeGame ---------- */
+const FG_MAX_RETRIGGER_BONUS = 50;  // 整個 FG session 透過 re-trigger 累計最多 +50 場
+function fgSpinsFromScatters(n){
+  // 場次階梯：4 顆 = 8 場，每多 1 顆 +2 場
+  return 8 + Math.max(0, n - 4) * 2;
+}
+/* ---------- Bonus Buy：直接付費進入 FG ----------
+   規格：
+   - 只有 EX OFF 時可買
+   - 成本：bet × 10 × 3 × 50（EX 金額 ×50）
+   - 進入 FG 使用 BUY_FG_MULTS [10,12,14,16,18,20]，起始 multIdx=0（×10）
+   - 8 場 FG（同 4-scatter 最低觸發）
+   - 結束後恢復按 Buy 前的 BG 盤面與倍率                                    */
+async function triggerBuyFG(){
+  if(state.spinning) return;
+  if(state.extra){ flashMsg('CLOSE EX FIRST'); return; }
+  if(state.mode==='FG'){ flashMsg('ALREADY IN FG'); return; }
+  const cost = buyFeatureCost();
+  if(state.balance < cost){ flashMsg('BALANCE LOW'); return; }
+
+  // 簡單 confirm 避免誤按高額下注
+  const ok = await buyConfirm(cost);
+  if(!ok) return;
+
+  // 扣款
+  state.balance -= cost;
+  updateBetDisplay();
+
+  // Snapshot BG state（盤面 + 倍率）
+  state.bgSnapshot = {
+    grid: state.lastGrid ? state.lastGrid.map(c=>c.slice()) : null,
+    multIdx: state.multIdx,
+  };
+
+  // 進入 Buy FG
+  state.boughtFG = true;
+  state.mode = 'FG';
+  state.fgLeft = 8;  // 基準 4 scatters 場次
+  state.fgBonusAdded = 0;
+  state.multIdx = 0;  // BUY_FG_MULTS[0] = ×10
+
+  // 轉場
+  const t = $('#transition');
+  const title = t.querySelector('.t-title');
+  const sub = t.querySelector('.t-sub');
+  const origTitle = title.textContent, origSub = sub.textContent;
+  title.textContent = 'BONUS BUY';
+  sub.textContent = `FREE GAME · START ×10`;
+  $('#tMult').textContent = '×10';
+  t.classList.add('on');
+  await sleep(1800);
+  t.classList.remove('on');
+  title.textContent = origTitle;
+  sub.textContent = 'Bring your luck · 射手上膛';
+
+  $('#fgBadge').classList.add('on');
+  $('#fgLeft').textContent = state.fgLeft;
+  renderMStrip();
+  updateBetDisplay();
+}
+
+// 簡易確認彈窗（避免誤按 150× 下注）
+function buyConfirm(cost){
+  return new Promise(resolve => {
+    const msg = `Bonus Buy 將花費 ${cost.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}\n直接進入 FG（起始 ×10）\n\n確認購買？`;
+    resolve(window.confirm(msg));
+  });
+}
+
+async function triggerFreeGame(scatterCount=4){
+  const freeSpins = fgSpinsFromScatters(scatterCount);
+  // transition
+  const t = $('#transition');
+  t.querySelector('.t-sub').textContent = `${scatterCount} SCATTERS · ${freeSpins} FREE SPINS`;
+  t.classList.add('on');
+  $('#tMult').textContent = '×'+state.mult;
+  await sleep(1800);
+  t.classList.remove('on');
+  // 還原 sub 文案（避免下次 endFreeGame 看到殘留）
+  t.querySelector('.t-sub').textContent = 'Bring your luck · 射手上膛';
+  state.mode='FG';
+  state.fgLeft = freeSpins;
+  state.fgBonusAdded = 0;  // 新 FG session 開始，累計加送歸零
+  $('#fgBadge').classList.add('on');
+  $('#fgLeft').textContent = state.fgLeft;
+  // 規格 p.1：EX 模式 BG 倍數帶入 FG；Normal 則不帶入（重置）
+  if(state.extra){
+    const list = currentMults();
+    state.multIdx = Math.min(state.multIdx, list.length-1);
+  } else {
+    state.multIdx = 0;  // Normal：BG 倍數不帶入 FG
+  }
+  renderMStrip();
+  updateBetDisplay();
+}
+async function retriggerFreeGame(scatterCount){
+  const bonus = fgSpinsFromScatters(scatterCount);
+  // 整個 FG session 累計加送 ≤ FG_MAX_RETRIGGER_BONUS
+  const remaining = Math.max(0, FG_MAX_RETRIGGER_BONUS - state.fgBonusAdded);
+  const added = Math.min(bonus, remaining);
+  state.fgLeft += added;
+  state.fgBonusAdded += added;
+  $('#fgLeft').textContent = state.fgLeft;
+
+  // 轉場畫面（較短版本）
+  const t = $('#transition');
+  const title = t.querySelector('.t-title');
+  const sub   = t.querySelector('.t-sub');
+  const mult  = $('#tMult');
+  title.textContent = 'RE-TRIGGER';
+  if(added>0){
+    sub.textContent = `${scatterCount} SCATTERS · +${added} FREE SPINS`;
+    mult.textContent = `+${added}`;
+  } else {
+    // 累計加送已達上限
+    sub.textContent = `BONUS CAP ${FG_MAX_RETRIGGER_BONUS} REACHED`;
+    mult.textContent = `MAX`;
+  }
+  t.classList.add('on');
+  await sleep(1500);
+  t.classList.remove('on');
+
+  // 還原轉場文字，避免 endFreeGame/下次進 FG 看到殘留
+  title.textContent = 'FREE GAME';
+  sub.textContent   = 'Bring your luck · 射手上膛';
+
+  // FG badge 脈衝一下，讓玩家注意到場次變了
+  const fgBadge = $('#fgBadge');
+  fgBadge.animate([
+    {transform:'scale(1)',   filter:'brightness(1)'},
+    {transform:'scale(1.25)',filter:'brightness(1.8)'},
+    {transform:'scale(1)',   filter:'brightness(1)'}
+  ], {duration:600, easing:'cubic-bezier(.3,1.4,.4,1)'});
+}
+
+async function endFreeGame(){
+  const t = $('#transition');
+  t.querySelector('.t-title').textContent='TOTAL HAUL';
+  t.querySelector('.t-sub').textContent='Free Game Summary';
+  $('#tMult').textContent = state.totalWin.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  t.classList.add('on');
+  await sleep(2400);
+  t.classList.remove('on');
+  t.querySelector('.t-title').textContent='FREE GAME';
+  t.querySelector('.t-sub').textContent='Bring your luck · 射手上膛';
+  state.mode='BG';
+  state.totalWin = 0;
+  state.fgBonusAdded = 0;  // 保險重置
+  $('#fgBadge').classList.remove('on');
+
+  // 規格：Bonus Buy 結束後恢復按 Buy 前的 BG 盤面與倍率
+  if(state.boughtFG && state.bgSnapshot){
+    state.multIdx = state.bgSnapshot.multIdx;
+    if(state.bgSnapshot.grid) renderGrid(state.bgSnapshot.grid);
+    state.bgSnapshot = null;
+    state.boughtFG = false;
+  } else {
+    state.multIdx = 0;
+  }
+  renderMStrip();
+  updateBetDisplay();
+}
+
+/* ---------- Big Win banner ---------- */
+async function showBigWin(label, amt){
+  const bw = $('#bigwin');
+  $('#bwLabel').textContent = label;
+  $('#bwAmt').textContent = amt.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  bw.classList.add('on');
+  await sleep(2200);
+  bw.classList.remove('on');
+}
+
+/* ---------- bindings ---------- */
+// Spin 按鈕 / Space 鍵的共用進入點：auto 進行中 → 停止 auto；否則觸發 spin
+function handleSpinTrigger(){
+  if(state.auto>0){
+    state.auto=0;
+    $('#autoBadge').classList.remove('on');
+    $('#autoBtn').classList.remove('on');
+    flashMsg('AUTO STOPPED');
+    return;
+  }
+  spin();
+}
+
+function bind(){
+  $('#spinBtn').addEventListener('click',handleSpinTrigger);
+  $('#extraBtn').addEventListener('click',toggleExtra);
+  $('#buyBtn').addEventListener('click',()=>{ triggerBuyFG(); });
+  // granular bet buttons
+  $('#betMinus').querySelector('button:first-child').addEventListener('click',(e)=>{e.stopPropagation();state.bet=Math.max(0.2,+(state.bet-0.2).toFixed(2));updateBetDisplay()});
+  $('#betMinus').querySelector('button:last-child').addEventListener('click',(e)=>{e.stopPropagation();state.bet=Math.min(20,+(state.bet+0.2).toFixed(2));updateBetDisplay()});
+
+  $('#autoBtn').addEventListener('click',()=>{
+    if(state.auto>0){state.auto=0;$('#autoBadge').classList.remove('on');$('#autoBtn').classList.remove('on');return;}
+    state.auto = 10;
+    $('#autoBtn').classList.add('on');
+    $('#autoBadge').classList.add('on');
+    $('#autoLeft').textContent = state.auto;
+    if(!state.spinning) spin();
+  });
+
+  document.addEventListener('keydown',e=>{
+    if(e.code==='Space'){e.preventDefault();handleSpinTrigger();}
+  });
+
+  // tweaks
+  $('#tw-suspense').addEventListener('input',e=>state.suspenseP=+e.target.value/100);
+  $('#tw-luck').addEventListener('input',e=>state.luck=+e.target.value/100);
+  $('#tw-forceFg').addEventListener('click',()=>{state.forceFg=true;flashMsg('NEXT SPIN → FG');});
+  $$('.speed').forEach(b=>b.addEventListener('click',()=>{$$('.speed').forEach(x=>x.classList.remove('on'));b.classList.add('on');state.speed=+b.dataset.s;}));
+  $$('.auton').forEach(b=>b.addEventListener('click',()=>{state.auto=+b.dataset.n;$('#autoBtn').classList.add('on');$('#autoBadge').classList.add('on');$('#autoLeft').textContent=state.auto;if(!state.spinning) spin();}));
+
+  // mobile tweaks modal
+  $('#tweakMobileBtn').addEventListener('click',()=>$('#tweaksModal').classList.add('on'));
+  $('#tweaksModalClose').addEventListener('click',()=>$('#tweaksModal').classList.remove('on'));
+  $('#tweaksModal').addEventListener('click',(e)=>{if(e.target.id==='tweaksModal') $('#tweaksModal').classList.remove('on');});
+  $('#tw-suspense-m').addEventListener('input',e=>{state.suspenseP=+e.target.value/100;const d=$('#tw-suspense');if(d)d.value=e.target.value;});
+  $('#tw-luck-m').addEventListener('input',e=>{state.luck=+e.target.value/100;const d=$('#tw-luck');if(d)d.value=e.target.value;});
+  $('#tw-forceFg-m').addEventListener('click',()=>{state.forceFg=true;flashMsg('NEXT SPIN → FG');$('#tweaksModal').classList.remove('on');});
+  $$('.speed-m').forEach(b=>b.addEventListener('click',()=>{$$('.speed-m').forEach(x=>x.classList.remove('on'));b.classList.add('on');state.speed=+b.dataset.s;$$('.speed').forEach(x=>{x.classList.toggle('on',x.dataset.s===b.dataset.s)});}));
+  $$('.auton-m').forEach(b=>b.addEventListener('click',()=>{state.auto=+b.dataset.n;$('#autoBtn').classList.add('on');$('#autoBadge').classList.add('on');$('#autoLeft').textContent=state.auto;$('#tweaksModal').classList.remove('on');if(!state.spinning) spin();}));
+
+  // 贏分分佈圖 — 桌面版 + 行動版共用
+  function runDist(modeSel, spinsSel, chartEl, statEl){
+    const mode = modeSel.value;
+    const spins = parseInt(spinsSel.value);
+    chartEl.textContent = `計算中… ${spins.toLocaleString()} ${mode==='BUY'?'buys':'spins'}`;
+    statEl.textContent = '';
+    // 用 setTimeout 讓 UI 更新
+    setTimeout(() => {
+      const t0 = performance.now();
+      const dist = runWinDist(mode, spins);
+      const dt = (performance.now() - t0);
+      renderDistChart(chartEl, dist);
+      const pNoWin = dist[0].probability;
+      const pAny = 1 - pNoWin;
+      const pBigWin = dist.slice(-3).reduce((a,b)=>a+b.probability, 0);  // >100x
+      statEl.textContent = `hit rate: ${(pAny*100).toFixed(2)}% · big (>100×): ${(pBigWin*100).toFixed(4)}% · ${dt.toFixed(0)}ms`;
+    }, 50);
+  }
+  $('#dist-run')?.addEventListener('click', ()=>{
+    runDist($('#dist-mode'), $('#dist-spins'), $('#dist-chart'), $('#dist-stat'));
+  });
+  $('#dist-run-m')?.addEventListener('click', ()=>{
+    runDist($('#dist-mode-m'), $('#dist-spins-m'), $('#dist-chart-m'), $('#dist-stat-m'));
+  });
+}
+
+/* ---------- tweaks host integration ---------- */
+window.addEventListener('message',(e)=>{
+  const d = e.data||{};
+  if(d.type==='__activate_edit_mode'){ $('#tweaks').classList.add('on'); }
+  if(d.type==='__deactivate_edit_mode'){ $('#tweaks').classList.remove('on'); }
+});
+addEventListener('load',()=>{
+  // announce after listener registered
+  window.parent.postMessage({type:'__edit_mode_available'},'*');
+});
+
+/* ==========================================================
+   RTP Simulator (dev tool)
+   呼叫方式：simulateRTP(100000) — 回傳完整 RTP 報告
+   不影響畫面、不觸碰 state，用 pure logic 複製 spin() 核心
+   ========================================================== */
+function _simSpin(ctx){
+  const pool = ctx.mode==='FG' ? FG_POOL : BG_POOL;
+  const grid = randomGrid(pool);
+  let workGrid = grid.map(c=>c.slice());
+  let totalWin = 0;
+  let multIdx = ctx.multIdx;
+  // 倍率陣列選擇：Buy FG 優先於 EX/Normal
+  let multList;
+  if(ctx.mode==='FG' && ctx.boughtFG)      multList = BUY_FG_MULTS;
+  else if(ctx.mode==='FG')                 multList = ctx.extra ? FG_EX_MULTS : FG_NORMAL_MULTS;
+  else                                      multList = ctx.extra ? BG_EX_MULTS : BG_NORMAL_MULTS;
+  // 折扣係數
+  let factor;
+  if(ctx.boughtFG)  factor = PAYOUT_FACTOR_BUY;
+  else if(ctx.extra) factor = PAYOUT_FACTOR_EX;
+  else              factor = PAYOUT_FACTOR_NORMAL;
+  while(true){
+    const wins = detectWins(workGrid);
+    if(!wins.winPositions.size) break;
+    const mult = multList[multIdx];
+    totalWin += wins.payout * ctx.bet * mult * factor;
+    // Bonus Buy：達頂卡 ×20；其他模式：循環回 ×1
+    if(ctx.boughtFG){
+      multIdx = Math.min(multIdx + 1, multList.length - 1);
+    } else {
+      multIdx = (multIdx + 1) % multList.length;
+    }
+    // cascade refill（不做 gold 管理，純邏輯）
+    for(let r=0;r<REEL_CT;r++){
+      const col = workGrid[r];
+      const keep = [];
+      for(let y=0;y<ROWS;y++){
+        if(!wins.winPositions.has(r+':'+y)) keep.push(col[y]);
+      }
+      while(keep.length<ROWS) keep.unshift(pickSym(pool));
+      workGrid[r] = keep;
+    }
+  }
+  // no-win → 依 extra/boughtFG 重置 multIdx
+  if(totalWin===0){
+    multIdx = (ctx.extra || ctx.boughtFG) ? Math.max(0, multIdx-1) : 0;
+  }
+  const scatters = countScatters(workGrid);
+  return {win: totalWin, multIdx, scatters};
+}
+function simulateRTP(spins=100000, opts={}){
+  const bet = opts.bet || 1;
+  const extra = !!opts.extra;
+  const totalBet = bet * 10 * (extra?3:1);  // 規格：EX 為 3 倍
+  let ctx = {mode:'BG', bet, extra, boughtFG:false, multIdx:0};
+  let wagered=0, won=0;
+  let fgTriggerCount=0, fgSpinCount=0, fgWon=0;
+  let bgWon=0;
+  for(let i=0;i<spins;i++){
+    wagered += totalBet;
+    const r = _simSpin(ctx);
+    won += r.win; bgWon += r.win;
+    ctx.multIdx = r.multIdx;
+    if(ctx.mode==='BG' && r.scatters>=4){
+      fgTriggerCount++;
+      let fgLeft = fgSpinsFromScatters(r.scatters);
+      let fgBonusAdded = 0;  // session 內累計加送
+      ctx.mode='FG';
+      // 規格 p.1：EX 模式 BG 倍數帶入 FG；Normal 不帶（重置）
+      if(extra){
+        const list = FG_EX_MULTS;
+        ctx.multIdx = Math.min(ctx.multIdx, list.length-1);
+      } else {
+        ctx.multIdx = 0;
+      }
+      while(fgLeft>0){
+        fgSpinCount++;
+        const fr = _simSpin(ctx);
+        won += fr.win; fgWon += fr.win;
+        ctx.multIdx = fr.multIdx;
+        if(fr.scatters>=4){
+          const bonus = fgSpinsFromScatters(fr.scatters);
+          const add = Math.min(bonus, FG_MAX_RETRIGGER_BONUS - fgBonusAdded);
+          fgLeft += add;
+          fgBonusAdded += add;
+        }
+        fgLeft--;
+      }
+      ctx.mode='BG'; ctx.multIdx=0;
+    }
+  }
+  return {
+    spins, wagered, won,
+    rtp: won/wagered,
+    rtpBG: bgWon/wagered,
+    rtpFG: fgWon/wagered,
+    fgTriggerRate: fgTriggerCount/spins,
+    fgTriggerEvery: spins/Math.max(1,fgTriggerCount),
+    avgFgSpins: fgTriggerCount ? fgSpinCount/fgTriggerCount : 0,
+  };
+}
+
+/* Buy Feature 獨立 RTP 模擬：
+   每次 buy 花 (bet×10×3×50) = 1500 × bet，進 FG 8 場
+   回傳 RTP = 總贏分 / 總花費                                           */
+function simulateBuyRTP(buys=10000, opts={}){
+  const bet = opts.bet || 1;
+  const buyCost = bet * 10 * 3 * 50;
+  let wagered = 0, won = 0;
+  for(let i=0;i<buys;i++){
+    wagered += buyCost;
+    let ctx = {mode:'FG', bet, extra:false, boughtFG:true, multIdx:0};
+    let fgLeft = 8, fgBonusAdded = 0;
+    while(fgLeft>0){
+      const fr = _simSpin(ctx);
+      won += fr.win;
+      ctx.multIdx = fr.multIdx;
+      if(fr.scatters>=4){
+        const bonus = fgSpinsFromScatters(fr.scatters);
+        const add = Math.min(bonus, FG_MAX_RETRIGGER_BONUS - fgBonusAdded);
+        fgLeft += add;
+        fgBonusAdded += add;
+      }
+      fgLeft--;
+    }
+  }
+  return {buys, wagered, won, rtp: won/wagered};
+}
+
+/* ==========================================================
+   贏分分佈 (Hit Distribution)
+   X 軸：贏分 / 下注 的倍率區間
+   Y 軸：該區間出現的機率（次數 / 總 spin）
+   ========================================================== */
+// 區間切分（以 win/bet 倍率為單位）
+const DIST_BUCKETS = [
+  {lo:0, hi:0, label:'0'},       // 完全沒中
+  {lo:0, hi:1, label:'(0,1]'},
+  {lo:1, hi:2, label:'(1,2]'},
+  {lo:2, hi:5, label:'(2,5]'},
+  {lo:5, hi:10, label:'(5,10]'},
+  {lo:10, hi:20, label:'(10,20]'},
+  {lo:20, hi:50, label:'(20,50]'},
+  {lo:50, hi:100, label:'(50,100]'},
+  {lo:100, hi:500, label:'(100,500]'},
+  {lo:500, hi:Infinity, label:'500+'},
+];
+function _bucketIndex(ratio){
+  if(ratio === 0) return 0;
+  for(let i=1;i<DIST_BUCKETS.length;i++){
+    const b = DIST_BUCKETS[i];
+    if(ratio > b.lo && ratio <= b.hi) return i;
+  }
+  return DIST_BUCKETS.length-1;
+}
+// mode: 'NORMAL' | 'EX' | 'BUY'
+function runWinDist(mode='NORMAL', spins=50000){
+  const counts = new Array(DIST_BUCKETS.length).fill(0);
+  const bet = 1;
+  if(mode === 'BUY'){
+    // 每個 BUY 當作一次事件，總贏分 / buy 成本 作為倍率
+    const buyCost = bet * 10 * 3 * 50;
+    for(let i=0;i<spins;i++){
+      let ctx = {mode:'FG', bet, extra:false, boughtFG:true, multIdx:0};
+      let fgLeft = 8, fgBonusAdded = 0, totalWin = 0;
+      while(fgLeft>0){
+        const fr = _simSpin(ctx);
+        totalWin += fr.win;
+        ctx.multIdx = fr.multIdx;
+        if(fr.scatters>=4){
+          const bonus = fgSpinsFromScatters(fr.scatters);
+          const add = Math.min(bonus, FG_MAX_RETRIGGER_BONUS - fgBonusAdded);
+          fgLeft += add; fgBonusAdded += add;
+        }
+        fgLeft--;
+      }
+      const ratio = totalWin / buyCost;
+      counts[_bucketIndex(ratio)]++;
+    }
+  } else {
+    const extra = (mode === 'EX');
+    const totalBet = bet * 10 * (extra?3:1);
+    let ctx = {mode:'BG', bet, extra, boughtFG:false, multIdx:0};
+    for(let i=0;i<spins;i++){
+      const r = _simSpin(ctx);
+      ctx.multIdx = r.multIdx;
+      let spinWin = r.win;
+      if(r.scatters>=4){
+        // FG 視為同一 spin 的贏分
+        let fgLeft = fgSpinsFromScatters(r.scatters), fgBonusAdded = 0;
+        ctx.mode='FG';
+        if(extra){
+          ctx.multIdx = Math.min(ctx.multIdx, FG_EX_MULTS.length-1);
+        } else {
+          ctx.multIdx = 0;
+        }
+        while(fgLeft>0){
+          const fr = _simSpin(ctx);
+          spinWin += fr.win;
+          ctx.multIdx = fr.multIdx;
+          if(fr.scatters>=4){
+            const bonus = fgSpinsFromScatters(fr.scatters);
+            const add = Math.min(bonus, FG_MAX_RETRIGGER_BONUS - fgBonusAdded);
+            fgLeft += add; fgBonusAdded += add;
+          }
+          fgLeft--;
+        }
+        ctx.mode='BG'; ctx.multIdx=0;
+      }
+      const ratio = spinWin / totalBet;
+      counts[_bucketIndex(ratio)]++;
+    }
+  }
+  return counts.map((c,i) => ({
+    label: DIST_BUCKETS[i].label,
+    count: c,
+    probability: c / spins,
+  }));
+}
+
+// 將分佈資料畫成 SVG 折線圖，畫到 targetEl 內
+function renderDistChart(targetEl, dist, opts={}){
+  const W = opts.width || 380;
+  const H = opts.height || 180;
+  const PAD_L = 40, PAD_R = 10, PAD_T = 14, PAD_B = 46;
+  const innerW = W - PAD_L - PAD_R;
+  const innerH = H - PAD_T - PAD_B;
+  const n = dist.length;
+  // Y 軸用對數刻度（機率範圍可能從 1e-5 到 1）
+  const LOG_MIN = -5;  // 1e-5
+  const LOG_MAX = 0;   // 1
+  function toY(p){
+    if(p <= 0) return PAD_T + innerH;
+    const lp = Math.max(LOG_MIN, Math.log10(p));
+    const norm = (lp - LOG_MIN) / (LOG_MAX - LOG_MIN);
+    return PAD_T + innerH - norm * innerH;
+  }
+  function toX(i){ return PAD_L + (i / (n-1)) * innerW; }
+
+  const points = dist.map((d,i) => `${toX(i).toFixed(1)},${toY(d.probability).toFixed(1)}`).join(' ');
+
+  // Y 軸參考線
+  const yTicks = [0, -1, -2, -3, -4, -5];
+  const yLines = yTicks.map(lv => {
+    const y = toY(Math.pow(10, lv));
+    return `<line x1="${PAD_L}" x2="${W-PAD_R}" y1="${y}" y2="${y}" stroke="#3a220e" stroke-dasharray="2 3"/>
+            <text x="${PAD_L-4}" y="${y+3}" text-anchor="end" fill="#6a411c" font-size="8" font-family="JetBrains Mono">1e${lv}</text>`;
+  }).join('');
+
+  // X 軸標籤
+  const xLabels = dist.map((d,i) => {
+    const x = toX(i);
+    return `<text x="${x}" y="${H-PAD_B+14}" text-anchor="middle" fill="#a87d3c" font-size="8" font-family="JetBrains Mono" transform="rotate(-30 ${x} ${H-PAD_B+14})">${d.label}</text>`;
+  }).join('');
+
+  // 資料點圓圈 + hover tooltip
+  const dots = dist.map((d,i) => {
+    const x = toX(i), y = toY(d.probability);
+    const pct = (d.probability*100).toFixed(3);
+    return `<circle cx="${x}" cy="${y}" r="3" fill="#ffd66b" stroke="#2a1608"><title>${d.label}: ${pct}% (n=${d.count})</title></circle>`;
+  }).join('');
+
+  targetEl.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" style="background:#0c0604;border:1px solid #3a220e;border-radius:4px">
+      ${yLines}
+      <polyline fill="none" stroke="#e84f2c" stroke-width="1.6" points="${points}"/>
+      ${dots}
+      ${xLabels}
+      <text x="${W/2}" y="${H-4}" text-anchor="middle" fill="#6a411c" font-size="9" font-family="Oswald">win / bet ratio</text>
+    </svg>`;
+}
+
+/* ---------- boot ---------- */
+function boot(){
+  buildReels();
+  renderGrid(randomGrid());
+  renderMStrip();
+  updateBetDisplay();
+  bind();
+
+  // loading anim
+  const bar = $('#bootBar');
+  let p=0;
+  const t = setInterval(()=>{
+    p+=Math.random()*18+6;
+    if(p>=100){p=100;clearInterval(t);bar.style.width='100%';$('#startBtn').classList.add('on');}
+    else bar.style.width=p+'%';
+  },140);
+  $('#startBtn').addEventListener('click',()=>{
+    $('#boot').style.transition='opacity .4s';$('#boot').style.opacity='0';
+    setTimeout(()=>{$('#boot').remove();}, 500);
+  });
+}
+boot();
+
+/* ---------- responsive scale（固定手機直式版面） ---------- */
+function fit(){
+  const w = innerWidth;
+  const stage = $('#stage');
+  document.body.classList.add('portrait');
+  if (w >= 480) {
+    // 桌面：直接顯示 420px 手機版面置中（免 DevTools 模擬器）
+    document.body.classList.add('desktop-frame');
+    stage.style.width = '';
+    stage.style.height = '';
+    stage.style.minHeight = '';
+    stage.style.transform = '';
+    stage.style.transformOrigin = '';
+  } else {
+    // 手機：以 420px 為設計基準等比縮到視窗寬
+    document.body.classList.remove('desktop-frame');
+    stage.style.width = '420px';
+    stage.style.height = 'auto';
+    stage.style.minHeight = '100vh';
+    stage.style.transform = `scale(${Math.min(w/420, 1)})`;
+    stage.style.transformOrigin = 'top center';
+  }
+}
+addEventListener('resize',fit);
+addEventListener('orientationchange',()=>setTimeout(fit,200));
+fit();
+</script>
+</body>
+</html>
