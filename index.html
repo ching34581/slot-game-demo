@@ -163,17 +163,6 @@
     opacity:0.5;
   }
 
-  .tweak-mobile-btn{
-    display:none;width:32px;height:32px;border-radius:50%;cursor:pointer;
-    background:linear-gradient(180deg,#8a5a20 0%,#3a1a08 100%);
-    border:2px solid #ffd66b;color:#fff;font-size:16px;line-height:1;
-    box-shadow:0 0 0 2px #000, 0 2px 10px rgba(0,0,0,.8), 0 0 12px #ffd66bcc;
-    align-items:center;justify-content:center;
-    position:fixed;top:10px;right:10px;z-index:200;
-  }
-  .tweak-mobile-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #1a0c06, 0 0 0 2px #2a1608}
-  body.portrait .tweak-mobile-btn{display:inline-flex}
-
   /* mobile tweaks modal */
   #tweaksModal{
     position:fixed;inset:0;z-index:300;display:none;
@@ -595,7 +584,7 @@
   body.portrait .stat{min-height:42px;padding:4px 8px}
   body.portrait .stat .v{font-size:14px}
   body.portrait .stat .k{font-size:9px}
-  body.portrait .stat.full{grid-column:span 3}
+  body.portrait .stat.full{grid-column:span 2}
   body.portrait .minibtn{min-height:42px;font-size:11px;padding:6px}
   body.portrait #betMinus{grid-column:3;grid-row:1}
   body.portrait .minibtn.full{grid-column:1 / -1}
@@ -626,10 +615,6 @@
   body.desktop-frame #tweaks{
     width:300px !important;right:14px !important;left:auto !important;bottom:14px !important;
   }
-  /* 把 ⚙ 貼回 420px stage 的右上角 */
-  body.desktop-frame .tweak-mobile-btn{
-    top:30px;right:calc(50% - 200px);left:auto;
-  }
   /* 手機 modal 在桌面下收成 420px 框內 */
   body.desktop-frame #tweaksModal{
     left:calc(50% - 210px);right:calc(50% - 210px);
@@ -650,7 +635,6 @@
       <div class="mstrip" id="mstrip">
         <div class="track" id="mtrack"></div>
       </div>
-      <button class="tweak-mobile-btn" id="tweakMobileBtn" aria-label="Tweaks" title="Tweaks">⚙</button>
       <div class="extra-pill" id="extraBtn">
         <div class="dot"></div>
         <div>
@@ -719,7 +703,8 @@
           <div class="k">Last Win</div>
           <div class="v" id="lastWin">—</div>
         </div>
-        <div class="minibtn full" id="autoBtn">AUTO</div>
+        <div class="minibtn" id="autoBtn">AUTO</div>
+        <div class="minibtn full" id="tweakBtn">⚙ TWEAKS</div>
       </div>
     </div>
 
@@ -1680,7 +1665,7 @@ function bind(){
   $$('.auton').forEach(b=>b.addEventListener('click',()=>{state.auto=+b.dataset.n;$('#autoBtn').classList.add('on');$('#autoBadge').classList.add('on');$('#autoLeft').textContent=state.auto;if(!state.spinning) spin();}));
 
   // mobile tweaks modal
-  $('#tweakMobileBtn').addEventListener('click',()=>$('#tweaksModal').classList.add('on'));
+  $('#tweakBtn').addEventListener('click',()=>$('#tweaksModal').classList.add('on'));
   $('#tweaksModalClose').addEventListener('click',()=>$('#tweaksModal').classList.remove('on'));
   $('#tweaksModal').addEventListener('click',(e)=>{if(e.target.id==='tweaksModal') $('#tweaksModal').classList.remove('on');});
   $('#tw-suspense-m').addEventListener('input',e=>{state.suspenseP=+e.target.value/100;const d=$('#tw-suspense');if(d)d.value=e.target.value;});
