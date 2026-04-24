@@ -430,11 +430,7 @@
   .minibtn:active{transform:translateY(2px);box-shadow:0 1px 0 #1a0c06, 0 0 0 2px #2a1608}
   .minibtn.on{background:linear-gradient(180deg,#b1321a 0%,#6a1708 100%);border-color:#ffb96b;color:#ffe9a8}
   .bet-adj{display:flex;align-items:center;gap:4px;width:100%;justify-content:space-between}
-  /* Total Bet 合併 bet-adj：上排 label+value，下排 − 1.00 + */
-  .stat.with-adj{grid-template-rows:auto auto;gap:4px}
-  .stat.with-adj .bet-adj{margin-top:2px}
-  .stat.with-adj .bet-adj span{font-family:JetBrains Mono,monospace;font-size:12px;color:#ffd08a}
-  .minibtn.full{grid-column:span 2}
+  .minibtn.full{grid-column:1 / -1}
   .bet-adj button{
     width:26px;height:26px;border-radius:4px;background:#2a1608;border:1px solid #5a371a;
     color:#ffd08a;cursor:pointer;font-weight:700
@@ -601,7 +597,8 @@
   body.portrait .stat .k{font-size:9px}
   body.portrait .stat.full{grid-column:span 3}
   body.portrait .minibtn{min-height:42px;font-size:11px;padding:6px}
-  body.portrait .minibtn.full{grid-column:span 3}
+  body.portrait #betMinus{grid-column:3;grid-row:1}
+  body.portrait .minibtn.full{grid-column:1 / -1}
 
   /* transition + bigwin stay fixed-coverage */
   body.portrait .transition{position:fixed}
@@ -713,11 +710,11 @@
           <div class="k">Balance</div>
           <div class="v" id="balVal">1,000,000</div>
         </div>
-        <div class="stat with-adj">
+        <div class="stat">
           <div class="k">Total Bet</div>
           <div class="v" id="betVal">10.00</div>
-          <div class="bet-adj"><button>−</button><span id="betShow">1.00</span><button>+</button></div>
         </div>
+        <div class="minibtn" id="betMinus"><div class="bet-adj"><button>−</button><span id="betShow">1.00</span><button>+</button></div></div>
         <div class="stat full">
           <div class="k">Last Win</div>
           <div class="v" id="lastWin">—</div>
@@ -1659,11 +1656,8 @@ function bind(){
   $('#extraBtn').addEventListener('click',toggleExtra);
   $('#buyBtn').addEventListener('click',()=>{ triggerBuyFG(); });
   // granular bet buttons
-  {
-    const adj = document.querySelector('.stat.with-adj .bet-adj');
-    adj.querySelector('button:first-child').addEventListener('click',(e)=>{e.stopPropagation();state.bet=Math.max(0.2,+(state.bet-0.2).toFixed(2));updateBetDisplay()});
-    adj.querySelector('button:last-child').addEventListener('click',(e)=>{e.stopPropagation();state.bet=Math.min(20,+(state.bet+0.2).toFixed(2));updateBetDisplay()});
-  }
+  $('#betMinus').querySelector('button:first-child').addEventListener('click',(e)=>{e.stopPropagation();state.bet=Math.max(0.2,+(state.bet-0.2).toFixed(2));updateBetDisplay()});
+  $('#betMinus').querySelector('button:last-child').addEventListener('click',(e)=>{e.stopPropagation();state.bet=Math.min(20,+(state.bet+0.2).toFixed(2));updateBetDisplay()});
 
   $('#autoBtn').addEventListener('click',()=>{
     if(state.auto>0){state.auto=0;$('#autoBadge').classList.remove('on');$('#autoBtn').classList.remove('on');return;}
