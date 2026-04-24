@@ -624,6 +624,15 @@
   body.desktop-frame #tweaks{
     width:300px !important;right:14px !important;left:auto !important;bottom:14px !important;
   }
+  /* 把 ⚙ 貼回 420px stage 的右上角 */
+  body.desktop-frame .tweak-mobile-btn{
+    top:30px;right:calc(50% - 200px);left:auto;
+  }
+  /* 手機 modal 在桌面下收成 420px 框內 */
+  body.desktop-frame #tweaksModal{
+    left:calc(50% - 210px);right:calc(50% - 210px);
+    width:420px;
+  }
 </style>
 </head>
 <body>
